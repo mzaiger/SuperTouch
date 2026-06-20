@@ -14,7 +14,7 @@
         }
 
 html {
-    transform: scale(0.6);
+    transform: scale(0.9);
     transform-origin: top center; 
 }
 
@@ -98,10 +98,10 @@ html {
             text-shadow: 0 0 5px #fff;
         }
 
-        /* --- Ball size increased to 70px --- */
+        /* --- Ball size increased to 105px --- */
         .ball {
-            width: 70px;
-            height: 70px;
+            width: 105px;
+            height: 105px;
             border-radius: 50%;
             position: absolute;
             display: flex;
@@ -165,8 +165,8 @@ html {
         /* number circle inside the ball - slightly bigger to match */
         .number-circle {
             background: #fff;
-            width: 30px;
-            height: 30px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -174,7 +174,7 @@ html {
             color: #000;
             font-family: Arial, sans-serif;
             font-weight: 900;
-            font-size: 18px;
+            font-size: 27px;
             font-style: italic;
             position: relative;
             z-index: 2;
@@ -285,8 +285,8 @@ html {
         </div>
 
         <button id="drawBtn" style="position: absolute; left: 240px; top: 520px; z-index: 60; margin: 0; padding: 12px 20px; font-size: 1.1em;">DRAW / SKIP</button>
-        <!-- deck slot increased to 70px, position adjusted slightly -->
-        <div id="deck-slot" style="position: absolute; left: 445px; top: 515px; width: 70px; height: 70px; border: 3px dashed rgba(255,255,255,0.4); border-radius: 50%; box-sizing: border-box;"></div>
+        <!-- deck slot sized to 105px to match balls -->
+        <div id="deck-slot" style="position: absolute; left: 445px; top: 500px; width: 105px; height: 105px; border: 3px dashed rgba(255,255,255,0.4); border-radius: 50%; box-sizing: border-box;"></div>
         <div id="deck-count" style="position: absolute; left: 525px; top: 535px; font-weight: bold; font-size: 1.2em; color: #aaffaa; text-shadow: 1px 1px 3px #000;"></div>
 
         <div id="end-overlay" class="overlay">

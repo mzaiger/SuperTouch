@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>11 Rounds Puzzle - Classic Arcade</title>
+    <style>
+        :root {
+            --wood: #3a2311;
+            --felt-light: #238a44;
+            --felt-dark: #125426;
+            --cushion: #0d3819;
+            --ui-bg: rgba(0, 0, 0, 0.85);
+        }
+
+html {
+    transform: scale(0.6);
+    transform-origin: top center; 
+}
+
+        body {
+            background: transparent;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            user-select: none;
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .title-number {
+            font-size: 3.5em;
+            font-weight: 900;
+            color: #ffaa00;
+            -webkit-text-stroke: 2px #aa00ff;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+            margin: 0;
+        }
+
+        .title-text {
+            font-size: 3.5em;
+            font-weight: 900;
+            color: #44aaff;
+            -webkit-text-stroke: 1px #003388;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+            margin: 0;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: radial-gradient(circle at center, var(--felt-light) 0%, var(--felt-dark) 100%);
+            border: 25px solid var(--cushion);
+            border-radius: 10px;
+            box-shadow:
+                inset 0 0 40px rgba(0, 0, 0, 0.9),
+                0 0 0 15px var(--wood),
+                0 15px 30px rgba(0, 0, 0, 0.9);
+            overflow: hidden;
+        }
+
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            display: flex;
+            gap: 20px;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .hud-box {
+            background: #111;
+            border: 2px solid #00aaff;
+            border-radius: 20px;
+            padding: 5px 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            box-shadow: inset 0 0 10px #00aaff, 0 5px 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            pointer-events: auto;
+        }
+
+        .text-glow {
+            color: #fff;
+            text-shadow: 0 0 5px #fff;
+        }
+
+        /* --- Ball size increased to 70px --- */
+        .ball {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.2s, top 0.4s ease-in-out, left 0.4s ease-in-out;
+            box-shadow: 2px 5px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        .ball::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            box-shadow: inset -10px -10px 20px rgba(0, 0, 0, 0.6), inset 5px 5px 15px rgba(255, 255, 255, 0.6);
+            pointer-events: none;
+        }
+
+        .ball.covered {
+            filter: brightness(0.35) saturate(0.2);
+            cursor: not-allowed;
+        }
+
+        .ball.selected {
+            transform: translateY(-8px) scale(1.1);
+            box-shadow: 0 15px 15px rgba(0, 0, 0, 0.6), 0 0 15px #ffaa00;
+            z-index: 9999 !important;
+        }
+        .ball.selected::after {
+            box-shadow: inset -10px -10px 20px rgba(0, 0, 0, 0.6), inset 5px 5px 15px rgba(255, 255, 255, 0.6), inset 0 0 10px #ffaa00;
+        }
+
+        .ball.error {
+            animation: shake 0.3s ease-in-out;
+            box-shadow: 0 0 20px #f00;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .b1 { background-color: #ffe100; }
+        .b2 { background-color: #0033cc; }
+        .b3 { background-color: #cc0000; }
+        .b4 { background-color: #660099; }
+        .b5 { background-color: #ff6600; }
+        .b6 { background-color: #006622; }
+        .b7 { background-color: #550000; }
+        .b8 { background-color: #222222; }
+        .b9 { background: linear-gradient(to bottom, #eeeeee 20%, #ffe100 20%, #ffe100 80%, #eeeeee 80%); }
+        .b10 { background: linear-gradient(to bottom, #eeeeee 20%, #0033cc 20%, #0033cc 80%, #eeeeee 80%); }
+
+        /* number circle inside the ball - slightly bigger to match */
+        .number-circle {
+            background: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-family: Arial, sans-serif;
+            font-weight: 900;
+            font-size: 18px;
+            font-style: italic;
+            position: relative;
+            z-index: 2;
+        }
+
+        .b8 .number-circle {
+            background: #eee;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--ui-bg);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+            pointer-events: auto;
+        }
+
+        .overlay h2 {
+            color: #ffcc00;
+            font-size: 3.5em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1.3em;
+            background: linear-gradient(to bottom, #44aaff, #0033cc);
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 15px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+        }
+        button:hover {
+            filter: brightness(1.2);
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            font-size: 1.5em;
+            text-align: center;
+            border-radius: 8px;
+            border: 2px solid #44aaff;
+            margin-bottom: 15px;
+            background: #111;
+            color: #fff;
+            text-transform: uppercase;
+            pointer-events: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 70%;
+            color: #fff;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 170, 255, 0.3);
+        }
+        th,
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+        th {
+            background: #0033cc;
+            color: #fff;
+            font-size: 1.2em;
+        }
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        tr.highlight td {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1 class="title-number">11</h1>
+        <h1 class="title-text">Rounds</h1>
+    </div>
+
+    <div id="game-container">
+        <div id="hud">
+            <div class="hud-box" style="border-color: #ffcc00;">
+                <span style="color: #ffcc00;">SUM:</span> <span id="sumDisplay" class="text-glow">0</span>
+            </div>
+            <div class="hud-box">
+                <span style="color: #00aaff;">SCORE:</span> <span id="scoreDisplay" class="text-glow">0</span>
+            </div>
+        </div>
+
+        <button id="drawBtn" style="position: absolute; left: 240px; top: 520px; z-index: 60; margin: 0; padding: 12px 20px; font-size: 1.1em;">DRAW / SKIP</button>
+        <!-- deck slot increased to 70px, position adjusted slightly -->
+        <div id="deck-slot" style="position: absolute; left: 445px; top: 515px; width: 70px; height: 70px; border: 3px dashed rgba(255,255,255,0.4); border-radius: 50%; box-sizing: border-box;"></div>
+        <div id="deck-count" style="position: absolute; left: 525px; top: 535px; font-weight: bold; font-size: 1.2em; color: #aaffaa; text-shadow: 1px 1px 3px #000;"></div>
+
+        <div id="end-overlay" class="overlay">
+            <h2 id="end-title">Table Cleared!</h2>
+            <p style="font-size: 2em; margin: 10px 0;">Final Score: <span id="final-score" style="color:#00aaff; font-weight:bold;"></span></p>
+            <input type="text" id="playerName" placeholder="ENTER INITIALS" maxlength="3" autocomplete="off">
+            <button id="saveScoreBtn">Save to Top 10</button>
+        </div>
+
+        <div id="leaderboard-overlay" class="overlay">
+            <h2>TOP 10 HI-SCORES</h2>
+            <table id="leaderboard-table">
+                <thead><tr><th>RANK</th><th>INITIALS</th><th>SCORE</th></tr></thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+            <button id="restartBtn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Core Game Variables ---
+        let score = 0;
+        let currentSum = 0;
+        let selectedBalls = [];
+        let allBalls = [];
+
+        // Deck Management Variables
+        let deckValues = [];
+        let currentDeckBall = null;
+        let overflowCount = 0;
+
+        // DOM Elements
+        const gameContainer = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const sumDisplay = document.getElementById('sumDisplay');
+        const endOverlay = document.getElementById('end-overlay');
+        const leaderboardOverlay = document.getElementById('leaderboard-overlay');
+        const deckCountDisplay = document.getElementById('deck-count');
+
+        // --- Layout Definitions (positions unchanged) ---
+        const tablePositions = [
+            { x: 300, y: 146 }, { x: 400, y: 146 }, { x: 500, y: 146 },
+            { x: 275, y: 188 }, { x: 325, y: 188 }, { x: 375, y: 188 }, { x: 425, y: 188 }, { x: 475, y: 188 }, { x: 525, y: 188 },
+            { x: 250, y: 230 }, { x: 300, y: 230 }, { x: 350, y: 230 }, { x: 400, y: 230 }, { x: 450, y: 230 }, { x: 500, y: 230 }, { x: 550, y: 230 },
+            { x: 275, y: 272 }, { x: 325, y: 272 }, { x: 475, y: 272 }, { x: 525, y: 272 },
+            { x: 300, y: 314 }, { x: 500, y: 314 }
+        ];
+
+        // --- Initialization ---
+        function initGame() {
+            score = 0;
+            currentSum = 0;
+            overflowCount = 0;
+            selectedBalls = [];
+            currentDeckBall = null;
+            allBalls.forEach(b => b.element.remove());
+            allBalls = [];
+            updateHUD();
+
+            endOverlay.style.display = 'none';
+            leaderboardOverlay.style.display = 'none';
+            document.body.style.pointerEvents = 'auto';
+
+            // Generate Top Diamonds (mark them as original)
+            generateBalls(tablePositions, 'table', true);
+
+            // Generate Deck
+            deckValues = [];
+            for (let i = 0; i < 28; i++) {
+                deckValues.push(Math.floor(Math.random() * 10) + 1);
+            }
+
+            drawBall(); // Draw the very first ball
+        }
+
+        function generateBalls(positions, type, isOriginal = false) {
+            positions.forEach((pos, index) => {
+                let val = Math.floor(Math.random() * 10) + 1;
+                let ballData = {
+                    id: `${type}_${index}`,
+                    value: val,
+                    x: pos.x,
+                    y: pos.y,
+                    active: true,
+                    isCovered: false,
+                    isOriginal: isOriginal,   // <-- flag to identify original diamond balls
+                    element: createBallElement(val, pos.x, pos.y)
+                };
+                ballData.element.style.zIndex = Math.floor(pos.y);
+                ballData.element.addEventListener('click', () => handleBallClick(ballData));
+                gameContainer.appendChild(ballData.element);
+                allBalls.push(ballData);
+            });
+        }
+
+        function createBallElement(val, x, y) {
+            let div = document.createElement('div');
+            div.className = `ball b${val}`;
+            div.style.left = `${x}px`;
+            div.style.top = `${y}px`;
+            let numCircle = document.createElement('div');
+            numCircle.className = 'number-circle';
+            numCircle.innerText = val;
+            div.appendChild(numCircle);
+            return div;
+        }
+
+        // --- helper: find a placement position that touches at least one original diamond ball ---
+        function findPlacementPosition() {
+            // Original diamond balls (active)
+            let originalBalls = allBalls.filter(b => b.active && b.isOriginal);
+            
+            // If no original balls remain, fallback to any active ball (should not happen)
+            let referenceBalls = originalBalls.length > 0 ? originalBalls : allBalls.filter(b => b.active);
+
+            if (referenceBalls.length === 0) {
+                // No balls at all → fallback center
+                return { x: 400, y: 390 };
+            }
+
+            // Occupied positions (for collision check)
+            let occupied = allBalls.filter(b => b.active).map(b => ({ x: b.x, y: b.y }));
+
+            // 1) Check empty spots from the classic diamond layout
+            let emptySpots = tablePositions.filter(pos => {
+                return !occupied.some(occ => Math.abs(occ.x - pos.x) < 5 && Math.abs(occ.y - pos.y) < 5);
+            });
+
+            // Keep only those that are adjacent (distance ≤ 72) to at least one original ball (70px + 2px margin)
+            let adjacentEmpty = emptySpots.filter(pos => {
+                return originalBalls.some(ball => {
+                    let dx = ball.x - pos.x;
+                    let dy = ball.y - pos.y;
+                    return Math.sqrt(dx * dx + dy * dy) <= 72;
+                });
+            });
+
+            if (adjacentEmpty.length > 0) {
+                // lowest (highest y) first
+                adjacentEmpty.sort((a, b) => b.y - a.y);
+                return adjacentEmpty[0];
+            }
+
+            // 2) No adjacent empty diamond spot → generate new positions around original balls
+            let candidates = [];
+            for (let ball of originalBalls) {
+                // 8 directions at distance 72px (diameter + margin)
+                let dirs = [
+                    { dx: 72, dy: 0 }, { dx: -72, dy: 0 }, { dx: 0, dy: 72 }, { dx: 0, dy: -72 },
+                    { dx: 51, dy: 51 }, { dx: -51, dy: 51 }, { dx: 51, dy: -51 }, { dx: -51, dy: -51 }
+                ];
+                for (let d of dirs) {
+                    let cx = ball.x + d.dx;
+                    let cy = ball.y + d.dy;
+                    // within board bounds
+                    if (cx >= 0 && cx <= 800 && cy >= 0 && cy <= 600) {
+                        // not occupied
+                        if (!occupied.some(occ => Math.abs(occ.x - cx) < 5 && Math.abs(occ.y - cy) < 5)) {
+                            candidates.push({ x: cx, y: cy });
+                        }
+                    }
+                }
+            }
+
+            if (candidates.length > 0) {
+                candidates.sort((a, b) => b.y - a.y);
+                return candidates[0];
+            }
+
+            // 3) No candidate found → fallback to overflow grid (should be rare)
+            let fallback = originalBalls[0];
+            if (fallback) {
+                return { x: fallback.x + 72, y: fallback.y };
+            }
+            return { x: 400, y: 390 };
+        }
+
+        // --- Draw / Skip Logic ---
+        function drawBall() {
+            if (currentDeckBall) {
+                // Auto-deselect if the skipped ball was selected
+                if (selectedBalls.includes(currentDeckBall)) {
+                    selectedBalls.splice(selectedBalls.indexOf(currentDeckBall), 1);
+                    currentSum -= currentDeckBall.value;
+                    currentDeckBall.element.classList.remove('selected');
+                    updateHUD();
+                }
+
+                // ---- PLACEMENT LOGIC: always touch at least one original diamond ball ----
+                let placement = findPlacementPosition();
+
+                if (placement) {
+                    currentDeckBall.id = `table_replaced_${Math.random()}`;
+                    currentDeckBall.x = placement.x;
+                    currentDeckBall.y = placement.y;
+                    currentDeckBall.isOriginal = false;
+                } else {
+                    // Fallback: overflow (maintains original grid, but still tries to be adjacent)
+                    currentDeckBall.id = `table_overflow_${overflowCount}`;
+                    let centerOffsets = [0, -72, 72, -144, 144, -216, 216];
+                    let colNum = overflowCount % 7;
+                    let rowNum = Math.floor(overflowCount / 7);
+                    let fallbackX = 400 + centerOffsets[colNum];
+                    let fallbackY = 390 + (rowNum * 72);
+                    // adjust fallback to be near the lowest original ball if possible
+                    let lowestOriginal = allBalls.filter(b => b.active && b.isOriginal).sort((a, b) => b.y - a.y)[0];
+                    if (lowestOriginal) {
+                        let tryY = lowestOriginal.y + 72;
+                        if (tryY <= 600 && !allBalls.some(b => b.active && Math.abs(b.x - fallbackX) < 5 && Math.abs(b.y - tryY) < 5)) {
+                            fallbackY = tryY;
+                        }
+                    }
+                    currentDeckBall.x = fallbackX;
+                    currentDeckBall.y = fallbackY;
+                    currentDeckBall.isOriginal = false;
+                    overflowCount++;
+                }
+
+                // Animate to new position
+                currentDeckBall.element.style.left = `${currentDeckBall.x}px`;
+                currentDeckBall.element.style.top = `${currentDeckBall.y}px`;
+                currentDeckBall.element.style.zIndex = Math.floor(currentDeckBall.y);
+
+                // Re-bind click handler (clone + replace to avoid stale references)
+                let movedBall = currentDeckBall;
+                let newElement = movedBall.element.cloneNode(true);
+                movedBall.element.parentNode.replaceChild(newElement, movedBall.element);
+                movedBall.element = newElement;
+                movedBall.element.addEventListener('click', () => handleBallClick(movedBall));
+                // restore z-index & position
+                movedBall.element.style.zIndex = Math.floor(movedBall.y);
+                movedBall.element.style.left = `${movedBall.x}px`;
+                movedBall.element.style.top = `${movedBall.y}px`;
+                if (movedBall.isCovered) movedBall.element.classList.add('covered');
+                if (selectedBalls.includes(movedBall)) movedBall.element.classList.add('selected');
+            }
+
+            // Draw a new ball into the slot if deck isn't empty
+            if (deckValues.length > 0) {
+                let val = deckValues.pop();
+                let x = 445; // adjust to match new deck slot
+                let y = 515;
+
+                let newBall = {
+                    id: `deck_current`,
+                    value: val,
+                    x: x,
+                    y: y,
+                    active: true,
+                    isCovered: false,
+                    isOriginal: false,
+                    element: createBallElement(val, x, y)
+                };
+                newBall.element.style.zIndex = 1000;
+                newBall.element.addEventListener('click', () => handleBallClick(newBall));
+                gameContainer.appendChild(newBall.element);
+                allBalls.push(newBall);
+                currentDeckBall = newBall;
+            } else {
+                currentDeckBall = null; // Deck is empty
+            }
+
+            deckCountDisplay.innerText = `REMAINING: ${deckValues.length}`;
+            updateCoverage();
+            checkPlayableOptions();
+        }
+
+        // Listen for Draw/Skip Button
+        document.getElementById('drawBtn').addEventListener('click', () => {
+            if (deckValues.length === 0 && !currentDeckBall) return;
+            drawBall();
+        });
+
+        // --- South-Only Coverage Logic (Distance Based) ---
+        function updateCoverage() {
+            let tableBalls = allBalls.filter(b => b.active && b.id.startsWith('table_'));
+
+            tableBalls.forEach(ball => {
+                let isCovered = false;
+
+                // Check if ANY active ball is directly south and overlapping this one
+                for (let otherBall of tableBalls) {
+                    if (ball === otherBall) continue;
+
+                    // The other ball must be physically lower (south) on the board
+                    if (otherBall.y > ball.y) {
+                        let dx = otherBall.x - ball.x;
+                        let dy = otherBall.y - ball.y;
+                        let distance = Math.sqrt((dx * dx) + (dy * dy));
+
+                        // 70px diameter + 2px grace margin for overlap
+                        if (distance <= 72) {
+                            isCovered = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (isCovered) {
+                    ball.element.classList.add('covered');
+                    ball.isCovered = true;
+                } else {
+                    ball.element.classList.remove('covered');
+                    ball.isCovered = false;
+                }
+            });
+
+            // The current active single deck ball is always playable
+            if (currentDeckBall && currentDeckBall.active) {
+                currentDeckBall.element.classList.remove('covered');
+                currentDeckBall.isCovered = false;
+            }
+        }
+
+        // --- Ball Click ---
+        function handleBallClick(ballData) {
+            if (!ballData.active || ballData.isCovered) return;
+
+            let index = selectedBalls.indexOf(ballData);
+            if (index > -1) {
+                selectedBalls.splice(index, 1);
+                ballData.element.classList.remove('selected');
+                currentSum -= ballData.value;
+                updateHUD();
+                return;
+            }
+
+            selectedBalls.push(ballData);
+            ballData.element.classList.add('selected');
+            currentSum += ballData.value;
+            updateHUD();
+
+            if (currentSum === 11) {
+                processMatch();
+            } else if (currentSum > 11) {
+                processBust();
+            }
+        }
+
+        // --- Match & Bust ---
+        function processMatch() {
+            document.body.style.pointerEvents = 'none';
+            setTimeout(() => {
+                selectedBalls.forEach(b => {
+                    b.active = false;
+                    b.element.style.transform = 'scale(0)';
+                    setTimeout(() => b.element.remove(), 200);
+
+                    if (b === currentDeckBall) {
+                        currentDeckBall = null;
+                    }
+                });
+                score += (selectedBalls.length * 100);
+                selectedBalls = [];
+                currentSum = 0;
+                updateHUD();
+                updateCoverage();
+                document.body.style.pointerEvents = 'auto';
+                checkPlayableOptions();
+            }, 300);
+        }
+
+        function processBust() {
+            document.body.style.pointerEvents = 'none';
+            selectedBalls.forEach(b => b.element.classList.add('error'));
+            setTimeout(() => {
+                selectedBalls.forEach(b => {
+                    b.element.classList.remove('selected');
+                    b.element.classList.remove('error');
+                });
+                selectedBalls = [];
+                currentSum = 0;
+                updateHUD();
+                document.body.style.pointerEvents = 'auto';
+            }, 400);
+        }
+
+        // --- Subset Sum ---
+        function canForm11() {
+            let candidates = allBalls.filter(b => b.active && !b.isCovered);
+            let n = candidates.length;
+            if (n === 0) return false;
+
+            let values = candidates.map(b => b.value);
+            let found = false;
+
+            function search(idx, sum) {
+                if (found) return;
+                if (sum === 11) { found = true; return; }
+                if (sum > 11 || idx >= n) return;
+                search(idx + 1, sum + values[idx]);
+                search(idx + 1, sum);
+            }
+
+            search(0, 0);
+            return found;
+        }
+
+        // --- End-Game Check ---
+        function checkPlayableOptions() {
+            let activeTable = allBalls.filter(b => b.active && b.id.startsWith('table_'));
+
+            if (activeTable.length === 0) {
+                score += 5000;
+                endGame("TABLE CLEARED!");
+                return;
+            }
+
+            // Declare 'game over' if deck is empty, deck ball is skipped, and no combinations exist
+            if (deckValues.length === 0 && !currentDeckBall) {
+                if (!canForm11()) {
+                    endGame("NO MORE MOVES!");
+                }
+            }
+        }
+
+        function endGame(message) {
+            document.getElementById('end-title').innerText = message;
+            document.getElementById('final-score').innerText = score;
+            setTimeout(() => {
+                endOverlay.style.display = 'flex';
+                document.getElementById('playerName').focus();
+            }, 600);
+        }
+
+        function updateHUD() {
+            scoreDisplay.innerText = score;
+            sumDisplay.innerText = currentSum;
+        }
+
+        // --- Leaderboard ---
+        const STORAGE_KEY = '11Ball_Arcade_Top10';
+
+        function getLeaderboard() {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        }
+
+        function saveScore(name, finalScore) {
+            let board = getLeaderboard();
+            let entry = { name: name.toUpperCase() || 'PLY', score: finalScore };
+            board.push(entry);
+            board.sort((a, b) => b.score - a.score);
+            board = board.slice(0, 10);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(board));
+            return entry;
+        }
+
+        function showLeaderboard(newEntry = null) {
+            endOverlay.style.display = 'none';
+            leaderboardOverlay.style.display = 'flex';
+
+            let board = getLeaderboard();
+            let tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = '';
+
+            if (board.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3">NO RECORDS YET</td></tr>';
+            } else {
+                board.forEach((row, i) => {
+                    let tr = document.createElement('tr');
+                    if (newEntry && row.name === newEntry.name && row.score === newEntry.score) {
+                        tr.className = 'highlight';
+                    }
+                    tr.innerHTML = `<td>${i + 1}</td><td>${row.name}</td><td>${row.score}</td>`;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        // --- Event Listeners ---
+        document.getElementById('saveScoreBtn').addEventListener('click', () => {
+            let name = document.getElementById('playerName').value.trim();
+            let savedEntry = saveScore(name, score);
+            showLeaderboard(savedEntry);
+        });
+
+        document.getElementById('playerName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('saveScoreBtn').click();
+        });
+
+        document.getElementById('restartBtn').addEventListener('click', initGame);
+
+        // Boot
+        initGame();
+    </script>
+
+</body>
+</html>

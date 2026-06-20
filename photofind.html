@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Find</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;               /* no scrollbars */
+            background: transparent;
+            height: 100vh;
+            width: 100vw;
+        }
+        iframe {
+            position: fixed;
+            top: 10px;
+            left: 50%;                     /* horizontal center */
+            display: block;
+            /* fixed size: must be (visual_width / zoom) */
+            /* visual width = 1040px (twice 520), visual height = 520px (twice 260) */
+            /* zoom 33% → scale(0.33) → actual size = 1040/0.33 = 3152px, 520/0.33 = 1576px */
+            width: 1452px;
+            height: 1176px;
+            border: none;
+            transform: translateX(-50%) scale(0.45);
+            transform-origin: top center;  /* keep top aligned, center horizontally */
+            overflow: hidden;              /* safety */
+        }
+    </style>
+</head>
+<br/>
+<body>
+    <iframe src="loadphotofind.html" scrolling="no"></iframe>
+</body>
+</html>

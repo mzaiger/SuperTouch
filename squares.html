@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Squares</title>
+  <link href="https://fonts.googleapis.com/css2?family=Chango&family=Anonymous+Pro:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: transparent;
+      font-family: 'Anonymous Pro', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 8px 24px;
+    }
+
+    /* ── HEADER / DASHBOARD ── */
+    #dashboard {
+      width: 100%;
+      max-width: 620px;
+      margin-bottom: 12px;
+    }
+
+    .dash-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .dash-cell { flex: 1; }
+    .dash-cell.center { flex: 0 0 auto; text-align: center; }
+
+    .dash-label {
+      font-family: 'Chango', cursive;
+      font-size: 13px;
+      color: #2c5f7a;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .score-box {
+      background: #1a3a4a;
+      color: #7fffd4;
+      font-family: 'Anonymous Pro', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 6px;
+      letter-spacing: 2px;
+      min-width: 110px;
+      display: inline-block;
+      text-align: right;
+    }
+
+    .score-box.dim { color: #5faabb; }
+
+    #game-title {
+      font-family: 'Chango', cursive;
+      font-size: 32px;
+      color: #44aaff;
+      -webkit-text-stroke: 1px #003388;
+      text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    #game-subtitle {
+      font-size: 11px;
+      color: #ffaa00;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+      letter-spacing: 1px;
+    }
+
+    /* ── TIMER BAR ── */
+    #timer-section {
+      width: 100%;
+      max-width: 620px;
+      margin-bottom: 10px;
+    }
+
+    .timer-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .timer-label {
+      font-family: 'Chango', cursive;
+      font-size: 13px;
+      color: #2c5f7a;
+    }
+
+    #time-remaining {
+      font-family: 'Anonymous Pro', monospace;
+      font-weight: 700;
+      font-size: 15px;
+      color: #1a3a4a;
+    }
+
+    .progress-track {
+      background: #5b9bb5;
+      border-radius: 8px;
+      height: 22px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
+    }
+
+    #time-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #2ecc71, #27ae60);
+      border-radius: 8px;
+      transition: width 0.4s linear, background 0.4s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #time-bar::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -60px; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 10px,
+        rgba(255,255,255,0.12) 10px,
+        rgba(255,255,255,0.12) 20px
+      );
+      animation: stripe-move 1.2s linear infinite;
+    }
+
+    @keyframes stripe-move {
+      from { transform: translateX(0); }
+      to { transform: translateX(40px); }
+    }
+
+    #time-bar.warning {
+      background: linear-gradient(90deg, #f39c12, #e67e22);
+    }
+    #time-bar.danger {
+      background: linear-gradient(90deg, #e74c3c, #c0392b);
+    }
+
+    /* ── CANVAS WRAPPER ── */
+    #canvas-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    #gameCanvas {
+      display: block;
+      border-radius: 8px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    /* ── OVERLAY MESSAGES ── */
+    #overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: rgba(26,58,74,0.88);
+      backdrop-filter: blur(2px);
+      gap: 14px;
+    }
+
+    #overlay.visible { display: flex; }
+
+    #overlay-title {
+      font-family: 'Chango', cursive;
+      font-size: 36px;
+      color: #7fffd4;
+      text-align: center;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    #overlay-detail {
+      font-size: 15px;
+      color: #cce8f0;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    #overlay-btn {
+      font-family: 'Chango', cursive;
+      font-size: 18px;
+      background: #2ecc71;
+      color: #1a3a4a;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 32px;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.15s;
+    }
+
+    #overlay-btn:hover { background: #27ae60; transform: scale(1.04); }
+
+    /* ── CONTROLS ── */
+    #controls {
+      width: 100%;
+      max-width: 620px;
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .ctrl-btn {
+      flex: 1;
+      font-family: 'Chango', cursive;
+      font-size: 15px;
+      padding: 9px 0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.15s;
+      letter-spacing: 0.5px;
+    }
+
+    .ctrl-btn:hover { transform: scale(1.03); }
+    .ctrl-btn:active { transform: scale(0.97); }
+
+    #btn-new { background: #1a3a4a; color: #7fffd4; }
+    #btn-top10 { background: #2c5f7a; color: #e0f4ff; }
+
+    /* ── TOP 10 PANEL ── */
+    #top10-panel {
+      display: none;
+      width: 100%;
+      max-width: 620px;
+      background: #1a3a4a;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-top: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    #top10-panel.visible { display: block; }
+
+    #top10-title {
+      font-family: 'Chango', cursive;
+      font-size: 20px;
+      color: #7fffd4;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .top10-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(127,255,212,0.12);
+      font-size: 14px;
+    }
+
+    .top10-row:last-child { border-bottom: none; }
+
+    .t10-rank {
+      font-family: 'Chango', cursive;
+      font-size: 16px;
+      color: #5faabb;
+      width: 28px;
+      text-align: right;
+    }
+
+    .t10-rank.gold   { color: #f1c40f; }
+    .t10-rank.silver { color: #bdc3c7; }
+    .t10-rank.bronze { color: #cd7f32; }
+
+    .t10-name { flex: 1; color: #cce8f0; }
+
+    .t10-score {
+      font-weight: 700;
+      color: #7fffd4;
+      letter-spacing: 1px;
+    }
+
+    .t10-time { color: #7a9eb0; font-size: 12px; width: 44px; text-align: right; }
+
+    .top10-empty {
+      color: #5faabb;
+      font-size: 13px;
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    #top10-clear {
+      font-family: 'Anonymous Pro', monospace;
+      font-size: 11px;
+      background: none;
+      border: 1px solid #2c5f7a;
+      color: #5faabb;
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    #top10-clear:hover { color: #e74c3c; border-color: #e74c3c; }
+
+    /* ── NAME PROMPT OVERLAY ── */
+    #name-prompt {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    #name-prompt.visible { display: flex; }
+
+    .name-box {
+      background: #1a3a4a;
+      border-radius: 10px;
+      padding: 28px 32px;
+      text-align: center;
+      max-width: 320px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    .name-box h2 {
+      font-family: 'Chango', cursive;
+      color: #7fffd4;
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+
+    .name-box p {
+      color: #cce8f0;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    #name-input {
+      width: 100%;
+      background: #0d2030;
+      border: 2px solid #2c5f7a;
+      border-radius: 6px;
+      color: #7fffd4;
+      font-family: 'Anonymous Pro', monospace;
+      font-size: 18px;
+      padding: 8px 12px;
+      text-align: center;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+      outline: none;
+    }
+
+    #name-input:focus { border-color: #7fffd4; }
+
+    #name-submit {
+      font-family: 'Chango', cursive;
+      font-size: 16px;
+      background: #2ecc71;
+      color: #1a3a4a;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 28px;
+      cursor: pointer;
+    }
+
+    #name-submit:hover { background: #27ae60; }
+
+    /* ── FLICKER for game over ── */
+    @keyframes pulse-danger {
+      0%, 100% { box-shadow: 0 6px 24px rgba(0,0,0,0.3); }
+      50% { box-shadow: 0 0 30px rgba(231,76,60,0.7); }
+    }
+    #canvas-wrapper.danger { animation: pulse-danger 0.6s ease infinite; }
+  </style>
+</head>
+<body>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="dash-row">
+    <div class="dash-cell">
+      <div class="dash-label">SCORE</div>
+      <div class="score-box" id="score-display">0</div>
+    </div>
+    <div class="dash-cell center">
+      <div id="game-title">Squares</div>
+      <div id="game-subtitle">CLICK GROUPS · CLEAR THE BOARD</div>
+    </div>
+    <div class="dash-cell" style="text-align:right">
+      <div class="dash-label">BEST</div>
+      <div class="score-box dim" id="best-display">0</div>
+    </div>
+  </div>
+</div>
+
+<!-- TIMER -->
+<div id="timer-section">
+  <div class="timer-label-row">
+    <span class="timer-label">TIME</span>
+    <span id="time-remaining">2:00</span>
+  </div>
+  <div class="progress-track">
+    <div id="time-bar"></div>
+  </div>
+</div>
+
+<!-- GAME CANVAS -->
+<div id="canvas-wrapper">
+  <canvas id="gameCanvas" width="520" height="260"></canvas>
+  <div id="overlay">
+    <div id="overlay-title">GAME OVER</div>
+    <div id="overlay-detail"></div>
+    <button id="overlay-btn">PLAY AGAIN</button>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div id="controls">
+  <button class="ctrl-btn" id="btn-new">⟳ NEW GAME</button>
+  <button class="ctrl-btn" id="btn-top10">🏆 TOP 10</button>
+</div>
+
+<!-- TOP 10 PANEL -->
+<div id="top10-panel">
+  <div id="top10-title">🏆 TOP 10 SCORES</div>
+  <div id="top10-list"></div>
+  <button id="top10-clear">clear scores</button>
+</div>
+
+<!-- NAME ENTRY PROMPT -->
+<div id="name-prompt">
+  <div class="name-box">
+    <h2>HIGH SCORE!</h2>
+    <p id="name-prompt-detail">Enter your name for the leaderboard</p>
+    <input id="name-input" type="text" maxlength="12" placeholder="YOUR NAME" autocomplete="off" />
+    <br>
+    <button id="name-submit">SAVE</button>
+  </div>
+</div>
+
+<script>
+(function() {
+
+  // ── CONSTANTS ──────────────────────────────────────────────────────────────
+  const WIDTH  = 20;   // columns
+  const HEIGHT = 10;   // rows
+  const TILE   = 26;   // px
+  const BORDER = 0;
+  const GAME_TIME = 120; // seconds
+
+  // Colour palette (4 colours + empty = index 0)
+  // Each colour: [base, dark shadow, light highlight]
+  const COLORS = [
+    null, // 0 = empty
+    { b:'#e74c3c', d:'#922b21', l:'#f1948a' }, // red
+    { b:'#3498db', d:'#1a5276', l:'#85c1e9' }, // blue
+    { b:'#2ecc71', d:'#1a6638', l:'#82e0aa' }, // green
+    { b:'#f39c12', d:'#7d6608', l:'#f8c471' }, // orange
+  ];
+
+  // ── STATE ──────────────────────────────────────────────────────────────────
+  let table = [];
+  let score = 0;
+  let markedCount = 0; // 0 = none marked, >0 = group selected, -1 = game over
+  let timerSeconds = GAME_TIME;
+  let timerInterval = null;
+  let gameActive = false;
+  let pendingScore = 0; // score to record after name entry
+
+  // ── DOM ───────────────────────────────────────────────────────────────────
+  const canvas   = document.getElementById('gameCanvas');
+  const ctx      = canvas.getContext('2d');
+  const scoreEl  = document.getElementById('score-display');
+  const bestEl   = document.getElementById('best-display');
+  const timeBar  = document.getElementById('time-bar');
+  const timeText = document.getElementById('time-remaining');
+  const overlay  = document.getElementById('overlay');
+  const overlayTitle  = document.getElementById('overlay-title');
+  const overlayDetail = document.getElementById('overlay-detail');
+  const overlayBtn    = document.getElementById('overlay-btn');
+  const top10Panel    = document.getElementById('top10-panel');
+  const top10List     = document.getElementById('top10-list');
+  const namePrompt    = document.getElementById('name-prompt');
+  const nameInput     = document.getElementById('name-input');
+  const nameDetail    = document.getElementById('name-prompt-detail');
+  const canvasWrapper = document.getElementById('canvas-wrapper');
+
+  // ── HELPERS ───────────────────────────────────────────────────────────────
+  const cellState = (x, y) =>
+    x < 0 || y < 0 || x >= WIDTH || y >= HEIGHT ? 0 : table[WIDTH * y + x];
+
+  const points = (m) => (m - 2) * (m - 2); // (m-2)^2
+
+  function resetTable(fn) {
+    fn = fn || (() => Math.floor(Math.random() * 4) + 1);
+    for (let i = 0; i < WIDTH * HEIGHT; i++) table[i] = fn(table[i]);
+  }
+
+  function swap(x1,y1,x2,y2) {
+    let p1 = WIDTH*y1+x1, p2 = WIDTH*y2+x2, t = table[p1];
+    table[p1] = table[p2]; table[p2] = t;
+  }
+
+  // Recursively mark a connected group; returns count of newly marked
+  function markGroup(x, y, c) {
+    if (cellState(x,y) <= 0 || c !== cellState(x,y)) return 0;
+    table[WIDTH*y+x] = -c;
+    return 1 + markGroup(x-1,y,c) + markGroup(x,y-1,c)
+             + markGroup(x+1,y,c) + markGroup(x,y+1,c);
+  }
+
+  // Check if any group of 2+ exists
+  function hasMovesLeft() {
+    for (let x=0; x<WIDTH; x++) for (let y=0; y<HEIGHT; y++) {
+      const c = cellState(x,y);
+      if (c > 0) {
+        if (cellState(x+1,y)===c || cellState(x,y+1)===c) return true;
+      }
+    }
+    return false;
+  }
+
+  function countRemaining() {
+    return table.filter(v => v > 0).length;
+  }
+
+  // ── DRAW ──────────────────────────────────────────────────────────────────
+  function draw() {
+    const W = canvas.width, H = canvas.height;
+    ctx.fillStyle = '#0d2030';
+    ctx.fillRect(0, 0, W, H);
+
+    for (let x = 0; x < WIDTH; x++) {
+      for (let y = 0; y < HEIGHT; y++) {
+        const raw = cellState(x, y);
+        const abs = Math.abs(raw);
+        const marked = raw < 0;
+        if (abs === 0) continue;
+
+        const col = COLORS[abs];
+        const px = x * TILE + BORDER;
+        const py = y * TILE + BORDER;
+
+        // shadow
+        ctx.fillStyle = col.d;
+        ctx.fillRect(px, py, TILE, TILE);
+        // highlight
+        ctx.fillStyle = col.l;
+        ctx.fillRect(px, py, TILE-1, TILE-1);
+        // base
+        ctx.fillStyle = marked ? col.l : col.b;
+        ctx.fillRect(px+1, py+1, TILE-2, TILE-2);
+
+        if (marked) {
+          // inner marker
+          const mp = 6;
+          ctx.fillStyle = col.d;
+          ctx.fillRect(px+mp, py+mp, TILE-mp*2, TILE-mp*2);
+        }
+      }
+    }
+  }
+
+  // ── TIMER ─────────────────────────────────────────────────────────────────
+  function updateTimerUI() {
+    const pct = timerSeconds / GAME_TIME * 100;
+    timeBar.style.width = pct + '%';
+    timeBar.className = pct > 50 ? '' : pct > 25 ? 'warning' : 'danger';
+    const m = Math.floor(timerSeconds / 60);
+    const s = timerSeconds % 60;
+    timeText.textContent = m + ':' + String(s).padStart(2,'0');
+    canvasWrapper.className = pct <= 15 ? 'danger' : '';
+  }
+
+  function startTimer() {
+    clearInterval(timerInterval);
+    timerSeconds = GAME_TIME;
+    updateTimerUI();
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      updateTimerUI();
+      if (timerSeconds <= 0) {
+        clearInterval(timerInterval);
+        endGame('⏱ TIME\'S UP!');
+      }
+    }, 1000);
+  }
+
+  function stopTimer() { clearInterval(timerInterval); }
+
+  // ── GRAVITY & COLUMN COMPACTION ────────────────────────────────────────────
+  function compactBoard() {
+    // Drop tiles down
+    for (let x = 0; x < WIDTH; x++) {
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (let y = 1; y < HEIGHT; y++) {
+          if (!cellState(x,y) && cellState(x,y-1)) {
+            swap(x, y, x, y-1);
+            changed = true;
+          }
+        }
+      }
+    }
+    // Shift columns left
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let x = 1; x < WIDTH; x++) {
+        if (!cellState(x-1, HEIGHT-1) && cellState(x, HEIGHT-1)) {
+          for (let y = 0; y < HEIGHT; y++) swap(x, y, x-1, y);
+          changed = true;
+        }
+      }
+    }
+  }
+
+  // ── FLASH MESSAGE (brief canvas overlay, no game pause) ──────────────────
+  let flashTimeout = null;
+  function flashMessage(msg) {
+    clearTimeout(flashTimeout);
+    const W = canvas.width, H = canvas.height;
+    ctx.save();
+    ctx.fillStyle = 'rgba(26,58,74,0.82)';
+    ctx.fillRect(0, H/2 - 30, W, 60);
+    ctx.font = 'bold 18px "Anonymous Pro", monospace';
+    ctx.fillStyle = '#7fffd4';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(msg, W/2, H/2);
+    ctx.restore();
+    flashTimeout = setTimeout(() => draw(), 850);
+  }
+
+  // ── GAME LIFECYCLE ────────────────────────────────────────────────────────
+  function newGame() {
+    overlay.classList.remove('visible');
+    canvasWrapper.className = '';
+    score = 0;
+    markedCount = 0;
+    gameActive = true;
+    resetTable();
+    scoreEl.textContent = score;
+    draw();
+    startTimer();
+  }
+
+  function endGame(reason) {
+    stopTimer();
+    gameActive = false;
+    canvasWrapper.className = '';
+
+    const finalScore = score;
+    scoreEl.textContent = score;
+
+    overlayTitle.textContent = reason;
+    let detail = `Final Score: ${finalScore}`;
+    overlayDetail.textContent = detail;
+    overlay.classList.add('visible');
+
+    // Check leaderboard
+    const top10 = getTop10();
+    const qualifies = top10.length < 10 || finalScore > top10[top10.length-1].score;
+    if (finalScore > 0 && qualifies) {
+      pendingScore = finalScore;
+      setTimeout(() => promptName(finalScore, timerSeconds), 800);
+    }
+
+    updateBest(finalScore);
+  }
+
+  // ── CLICK HANDLER ─────────────────────────────────────────────────────────
+  canvas.addEventListener('click', function(e) {
+    if (!gameActive) return;
+
+    const rect  = canvas.getBoundingClientRect();
+    const scaleX = canvas.width  / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const my = (e.clientY - rect.top)  * scaleY;
+
+    const gx = Math.floor((mx - BORDER) / TILE);
+    const gy = Math.floor((my - BORDER) / TILE);
+
+    // If we have a marked group selected and click it again → remove
+    if (markedCount > 1 && cellState(gx, gy) < 0) {
+      // Remove marked tiles
+      resetTable(v => v < 0 ? 0 : v);
+      score += points(markedCount);
+      scoreEl.textContent = score;
+      compactBoard();
+      markedCount = 0;
+
+      // Board cleared or stuck — flash a message then refresh tiles, keep score & timer
+      if (countRemaining() === 0 || !hasMovesLeft()) {
+        draw();
+        flashMessage(countRemaining() === 0 ? '🎉 BOARD CLEARED! +' + points(markedCount) : '🚫 NO MOVES — NEW TILES!');
+        setTimeout(() => { resetTable(); markedCount = 0; draw(); }, 900);
+        return;
+      }
+    }
+
+    // Unmark everything
+    resetTable(Math.abs);
+    markedCount = 0;
+
+    // Mark new group
+    if (gx >= 0 && gy >= 0 && gx < WIDTH && gy < HEIGHT && cellState(gx,gy) > 0) {
+      const c = cellState(gx, gy);
+      markedCount = markGroup(gx, gy, c);
+      if (markedCount < 2) {
+        // Single tile — unmark immediately
+        resetTable(Math.abs);
+        markedCount = 0;
+      }
+    }
+
+    draw();
+  });
+
+  // ── LEADERBOARD ───────────────────────────────────────────────────────────
+  function getTop10() {
+    try { return JSON.parse(localStorage.getItem('samegame_top10') || '[]'); }
+    catch(e) { return []; }
+  }
+
+  function saveTop10(list) {
+    localStorage.setItem('samegame_top10', JSON.stringify(list));
+  }
+
+  function updateBest(s) {
+    const top = getTop10();
+    const best = top.length ? Math.max(...top.map(r=>r.score)) : 0;
+    const current = Math.max(s, best);
+    bestEl.textContent = current;
+  }
+
+  function promptName(finalScore, timeLeft) {
+    nameDetail.textContent = `Score: ${finalScore} — Enter your name!`;
+    nameInput.value = '';
+    namePrompt.classList.add('visible');
+    nameInput.focus();
+  }
+
+  function submitName() {
+    const name = (nameInput.value.trim() || 'PLAYER').toUpperCase().slice(0,12);
+    namePrompt.classList.remove('visible');
+    const entry = { name, score: pendingScore, time: new Date().toLocaleDateString() };
+    let top10 = getTop10();
+    top10.push(entry);
+    top10.sort((a,b) => b.score - a.score);
+    top10 = top10.slice(0, 10);
+    saveTop10(top10);
+    renderTop10();
+  }
+
+  function renderTop10() {
+    const top10 = getTop10();
+    const rankClasses = ['gold','silver','bronze'];
+    if (!top10.length) {
+      top10List.innerHTML = '<div class="top10-empty">No scores yet. Play a game!</div>';
+      return;
+    }
+    top10List.innerHTML = top10.map((r,i) => `
+      <div class="top10-row">
+        <span class="t10-rank ${rankClasses[i]||''}">${i+1}.</span>
+        <span class="t10-name">${r.name}</span>
+        <span class="t10-score">${r.score.toLocaleString()}</span>
+        <span class="t10-time">${r.time||''}</span>
+      </div>`).join('');
+  }
+
+  // ── CONTROLS ──────────────────────────────────────────────────────────────
+  document.getElementById('btn-new').addEventListener('click', newGame);
+
+  overlayBtn.addEventListener('click', newGame);
+
+  document.getElementById('btn-top10').addEventListener('click', () => {
+    top10Panel.classList.toggle('visible');
+    if (top10Panel.classList.contains('visible')) renderTop10();
+  });
+
+  document.getElementById('top10-clear').addEventListener('click', () => {
+    if (confirm('Clear all scores?')) {
+      saveTop10([]);
+      renderTop10();
+      bestEl.textContent = 0;
+    }
+  });
+
+  document.getElementById('name-submit').addEventListener('click', submitName);
+  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitName(); });
+
+  // ── INIT ──────────────────────────────────────────────────────────────────
+  updateTimerUI();
+  updateBest(0);
+  newGame();
+
+})();
+</script>
+</body>
+</html>

@@ -240,15 +240,17 @@ html {
 
     /* ── TOP 10 PANEL ── */
     #top10-panel {
-      display: block;
+      display: none;
       width: 100%;
       max-width: 620px;
       background: #1a3a4a;
       border-radius: 8px;
       padding: 16px 20px;
-      margin: 10px auto;
+      margin-top: 10px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     }
+
+    #top10-panel.visible { display: block; }
 
     #top10-title {
       font-family: 'Chango', cursive;
@@ -417,13 +419,6 @@ html {
   </div>
 </div>
 
-<!-- TOP 10 PANEL -->
-<div id="top10-panel">
-  <div id="top10-title">🏆 TOP 10 SCORES</div>
-  <div id="top10-list"></div>
-  <button id="top10-clear">clear scores</button>
-</div>
-
 <!-- GAME CANVAS -->
 <div id="canvas-wrapper">
   <canvas id="gameCanvas" width="520" height="260"></canvas>
@@ -438,6 +433,13 @@ html {
 <div id="controls">
   <button class="ctrl-btn" id="btn-new">⟳ NEW GAME</button>
   <button class="ctrl-btn" id="btn-top10">🏆 TOP 10</button>
+</div>
+
+<!-- TOP 10 PANEL -->
+<div id="top10-panel">
+  <div id="top10-title">🏆 TOP 10 SCORES</div>
+  <div id="top10-list"></div>
+  <button id="top10-clear">clear scores</button>
 </div>
 
 <!-- NAME ENTRY PROMPT -->
@@ -587,7 +589,7 @@ html {
     timeText.textContent = m + ':' + String(s).padStart(2,'0');
     canvasWrapper.className = pct <= 15 ? 'danger' : '';
 
-    // ── SFX.hurry() when timer turns red (pct <= 25) ──
+    // ── SFX.hurry() when timer enters danger zone (pct <= 25) ──
     if (pct <= 25 && !hurryFired && gameActive) {
       hurryFired = true;
       if (typeof SFX !== 'undefined' && SFX.hurry) SFX.hurry();
@@ -813,7 +815,8 @@ html {
   overlayBtn.addEventListener('click', newGame);
 
   document.getElementById('btn-top10').addEventListener('click', () => {
-    document.getElementById('top10-panel').scrollIntoView({ behavior: 'smooth' });
+    top10Panel.classList.toggle('visible');
+    if (top10Panel.classList.contains('visible')) renderTop10();
   });
 
   document.getElementById('top10-clear').addEventListener('click', () => {
@@ -831,7 +834,6 @@ html {
   updateTimerUI();
   updateBest(0);
   newGame();
-  renderTop10();
 
 })();
 </script>

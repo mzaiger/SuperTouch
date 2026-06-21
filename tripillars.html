@@ -720,8 +720,6 @@
         </div>
     </div>
 
-    <!-- controls removed: New Game button removed, Undo moved to game area -->
-
     <div id="status-bar">&nbsp;</div>
 
     <div id="game-wrap">
@@ -1033,7 +1031,6 @@
             updateScoreBar();
             setStatus('');
             render();
-            // ── SFX.undo() ──
             if (typeof SFX !== 'undefined' && SFX.undo) SFX.undo();
         }
 
@@ -1047,7 +1044,6 @@
             const sv = document.getElementById('streak-val');
             sv.className = 'score-box' + (streak >= 5 ? ' hot' : '');
             updateHiDisplay();
-            // update undo button state
             if (undoBtnEl) {
                 undoBtnEl.disabled = history.length === 0 || gameOver;
             }
@@ -1145,14 +1141,24 @@
         // ════════════════════════════════════════════════════════
         function playTableauCard(row, col) {
             if (gameOver) return;
+
             const card = tableau[row][col];
-            if (!card || !isFree(row, col) || !canPlay(card)) {
-                if (card && isFree(row, col) && !canPlay(card)) {
-                    if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
-                }
+            // No card → silently ignore (shouldn't happen since we only attach to existing cards)
+            if (!card) return;
+
+            // ── WRONG CARD: covered (not free) → SFX.bad() ──
+            if (!isFree(row, col)) {
+                if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
                 return;
             }
 
+            // ── WRONG CARD: free but invalid rank → SFX.bad() ──
+            if (!canPlay(card)) {
+                if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
+                return;
+            }
+
+            // ── VALID PLAY ──
             history.push(snapshot());
 
             streak++;
@@ -1369,11 +1375,11 @@
                     el.style.top = pos.y + 'px';
                     if (!free) el.classList.add('dimmed');
                     if (play) el.classList.add('playable');
-                    if (play) {
-                        el.addEventListener('click', (function(r, col) {
-                            return function() { playTableauCard(r, col); };
-                        })(r, col));
-                    }
+                    // Always attach click handler – if not playable, it will trigger SFX.bad()
+                    el.addEventListener('click', (function(r, col) {
+                        return function() { playTableauCard(r, col); };
+                    })(r, col));
+
                     area.appendChild(el);
                 }
             }
@@ -1492,7 +1498,6 @@
         // ════════════════════════════════════════════════════════
         //  Events
         // ════════════════════════════════════════════════════════
-        // New Game button removed — use overlay "Play Again" or refresh
         document.getElementById('end-play-again').addEventListener('click', () => {
             pendingEntry = null;
             newGame();

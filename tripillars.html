@@ -1393,14 +1393,12 @@
                 el.style.left = wasteX + 'px';
                 el.style.top = wasteY + 'px';
                 area.appendChild(el);
-                addLabel(area, wasteX, wasteY + ch + 4, cw, 'FOUNDATION');
             } else {
                 const el = createCardElement(null, false, cw, ch, 200);
                 el.style.left = wasteX + 'px';
                 el.style.top = wasteY + 'px';
                 el.classList.add('freeslot');
                 area.appendChild(el);
-                addLabel(area, wasteX, wasteY + ch + 4, cw, 'FOUNDATION', '#44606a');
             }
 
             // ── Draw pile ──
@@ -1424,9 +1422,6 @@
                 el.style.cursor = 'default';
             }
             area.appendChild(el);
-            addLabel(area, deckX, deckY + ch + 4, cw,
-                hasCards ? 'DRAW (' + deck.length + ')' : 'EMPTY',
-                hasCards ? '#5faabb' : '#44606a');
 
             // ── UNDO BUTTON: right of the draw stack, smaller ──
             const undoX = deckX + cw + 10;

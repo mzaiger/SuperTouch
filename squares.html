@@ -235,8 +235,6 @@ html {
     .ctrl-btn:hover { transform: scale(1.03); }
     .ctrl-btn:active { transform: scale(0.97); }
 
-    #btn-new { background: #1a3a4a; color: #7fffd4; }
-
     /* ── NAME PROMPT & TOP 10 OVERLAYS ── */
     .full-overlay {
       display: none;
@@ -406,9 +404,8 @@ html {
   </div>
 </div>
 
-<div id="controls">
-  <button class="ctrl-btn" id="btn-new">⟳ NEW GAME</button>
-</div>
+<!-- controls: New Game button removed -->
+<div id="controls"></div>
 
 <div id="name-prompt" class="full-overlay">
   <div class="name-box">
@@ -565,7 +562,6 @@ html {
     timeText.textContent = m + ':' + String(s).padStart(2,'0');
     canvasWrapper.className = pct <= 15 ? 'danger' : '';
 
-    // ── SFX.hurry() when timer turns red (pct <= 25) ──
     if (pct <= 25 && !hurryFired && gameActive) {
       hurryFired = true;
       if (typeof SFX !== 'undefined' && SFX.hurry) SFX.hurry();
@@ -654,7 +650,6 @@ html {
     gameActive = false;
     canvasWrapper.className = '';
 
-    // ── SFX.over() ──
     if (typeof SFX !== 'undefined' && SFX.over) SFX.over();
 
     const finalScore = score;
@@ -665,7 +660,6 @@ html {
     overlayDetail.textContent = detail;
     overlay.classList.add('visible');
 
-    // Check leaderboard
     const top10 = getTop10();
     const qualifies = top10.length < 10 || finalScore > top10[top10.length-1].score;
     if (finalScore > 0 && qualifies) {
@@ -691,20 +685,16 @@ html {
 
     // If we have a marked group selected and click it again → remove
     if (markedCount > 1 && cellState(gx, gy) < 0) {
-      // ── SFX.good() on successful removal ──
       if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
 
-      // Remove marked tiles
       resetTable(v => v < 0 ? 0 : v);
       score += points(markedCount);
       scoreEl.textContent = score;
       compactBoard();
       markedCount = 0;
 
-      // Board cleared or stuck — flash a message then refresh tiles, keep score & timer
       if (countRemaining() === 0 || !hasMovesLeft()) {
         draw();
-        // ── SFX.good() on board cleared ──
         if (countRemaining() === 0) {
           if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
         }
@@ -714,7 +704,7 @@ html {
       }
       
       draw();
-      return; // <-- FIX: Adding this return prevents the code from continuing to the "Mark new group" logic below immediately after a successful clear.
+      return;
     }
 
     // Unmark everything
@@ -726,9 +716,7 @@ html {
       const c = cellState(gx, gy);
       markedCount = markGroup(gx, gy, c);
       if (markedCount < 2) {
-        // ── SFX.bad() on single-tile click (no group) ──
         if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
-        // Single tile — unmark immediately
         resetTable(Math.abs);
         markedCount = 0;
       }
@@ -791,8 +779,7 @@ html {
   }
 
   // ── CONTROLS ──────────────────────────────────────────────────────────────
-  document.getElementById('btn-new').addEventListener('click', newGame);
-
+  // No "New Game" button in controls.
   overlayBtn.addEventListener('click', newGame);
 
   document.getElementById('top10-play-again').addEventListener('click', () => {

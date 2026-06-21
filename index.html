@@ -245,7 +245,7 @@
             zoom: 1.15;
         }
 
-        /* ─── PHONE ONLY: scale to fit width, height maintains aspect ratio ─── */
+        /* ─── PHONE ONLY: 38% scale, fixed ──────────────────────────────────── */
         @media (max-width: 600px) {
             body {
                 overflow: hidden;
@@ -254,10 +254,8 @@
             }
 
             .arcade-wrapper {
-                /* scale so that the visual width equals 100vw */
-                transform: scale(calc(100vw / 900));
+                transform: scale(0.38);
                 transform-origin: center center;
-                /* keep original dimensions; scaling handles the visual size */
             }
         }
     </style>

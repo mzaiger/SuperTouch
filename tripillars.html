@@ -579,26 +579,17 @@
 
         /* ── top 10 panel ── */
         #top10-panel {
-            display: block;
+            display: none;
             width: 100%;
             max-width: 700px;
             background: #1a3a4a;
             border-radius: 8px;
             padding: 16px 20px;
-            margin: 10px auto;
+            margin-top: 10px;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            max-height: 800px;
-            opacity: 1;
-            transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out, margin 0.3s ease-in-out, padding 0.3s ease-in-out;
-            pointer-events: auto;
         }
-        #top10-panel.hidden {
-            max-height: 0 !important;
-            opacity: 0 !important;
-            margin: 0 auto !important;
-            padding: 0 20px !important;
-            pointer-events: none;
+        #top10-panel.visible {
+            display: block;
         }
         #top10-title {
             font-family: 'Chango', cursive;
@@ -776,13 +767,6 @@
     <!-- STATUS -->
     <div id="status-bar">&nbsp;</div>
 
-    <!-- TOP 10 PANEL -->
-    <div id="top10-panel" class="hidden">
-        <div id="top10-title">🏆 TOP 10 SCORES</div>
-        <div id="top10-list"></div>
-        <button id="top10-clear">clear scores</button>
-    </div>
-
     <!-- GAME AREA -->
     <div id="game-wrap">
         <div id="game-area"></div>
@@ -815,6 +799,13 @@
                 <button class="o-btn secondary" id="end-top10">🏆 Top 10</button>
             </div>
         </div>
+    </div>
+
+    <!-- TOP 10 PANEL -->
+    <div id="top10-panel">
+        <div id="top10-title">🏆 TOP 10 SCORES</div>
+        <div id="top10-list"></div>
+        <button id="top10-clear">clear scores</button>
     </div>
 
     <script>
@@ -919,7 +910,7 @@
             document.getElementById('time-remaining').textContent = m + ':' + String(s).padStart(2, '0');
             document.getElementById('game-wrap').className = pct <= 12 ? 'danger' : '';
 
-            // ── SFX.hurry() when timer turns red (pct <= 20) ──
+            // ── SFX.hurry() when timer enters danger zone (pct <= 20) ──
             if (pct <= 20 && !hurryFired && !gameOver) {
                 hurryFired = true;
                 if (typeof SFX !== 'undefined' && SFX.hurry) SFX.hurry();
@@ -1189,11 +1180,11 @@
         function playTableauCard(row, col) {
             if (gameOver) return;
             const card = tableau[row][col];
-            if (!card) return;
-
-            // ── Error sound for any invalid click ──
-            if (!isFree(row, col) || !canPlay(card)) {
-                if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
+            if (!card || !isFree(row, col) || !canPlay(card)) {
+                // ── SFX.bad() on invalid click (only if card exists and is free but not playable) ──
+                if (card && isFree(row, col) && !canPlay(card)) {
+                    if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
+                }
                 return;
             }
 
@@ -1431,12 +1422,11 @@
                     el.style.top = pos.y + 'px';
                     if (!free) el.classList.add('dimmed');
                     if (play) el.classList.add('playable');
-
-                    // ── Attach click handler to ALL cards ──
-                    el.addEventListener('click', (function(r, col) {
-                        return function() { playTableauCard(r, col); };
-                    })(r, col));
-
+                    if (play) {
+                        el.addEventListener('click', (function(r, col) {
+                            return function() { playTableauCard(r, col); };
+                        })(r, col));
+                    }
                     area.appendChild(el);
                 }
             }
@@ -1497,23 +1487,8 @@
         // ════════════════════════════════════════════════════════
         function showTop10() {
             const panel = document.getElementById('top10-panel');
-            panel.classList.remove('hidden');
-            setTimeout(() => {
-                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        }
-
-        function hideTop10() {
-            document.getElementById('top10-panel').classList.add('hidden');
-        }
-
-        function toggleTop10() {
-            const panel = document.getElementById('top10-panel');
-            if (panel.classList.contains('hidden')) {
-                showTop10();
-            } else {
-                hideTop10();
-            }
+            panel.classList.toggle('visible');
+            if (panel.classList.contains('visible')) renderTop10();
         }
 
         function renderTop10() {
@@ -1550,7 +1525,7 @@
         // ════════════════════════════════════════════════════════
         document.getElementById('btn-new').addEventListener('click', newGame);
         document.getElementById('btn-undo').addEventListener('click', undoMove);
-        document.getElementById('btn-top10').addEventListener('click', toggleTop10);
+        document.getElementById('btn-top10').addEventListener('click', showTop10);
         document.getElementById('top10-clear').addEventListener('click', () => {
             if (confirm('Clear all scores?')) { saveHS([]);
                 renderTop10();
@@ -1602,7 +1577,6 @@
 
         // ── Start ──
         newGame();
-        renderTop10();
     </script>
 </body>
 </html>

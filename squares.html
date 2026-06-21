@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Squares</title>
   <link href="https://fonts.googleapis.com/css2?family=Chango&family=Anonymous+Pro:wght@400;700&display=swap" rel="stylesheet">
+  <script src="sfx.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html {
@@ -481,6 +482,9 @@ html {
   let gameActive = false;
   let pendingScore = 0; // score to record after name entry
 
+  // ── one-shot hurry flag ──
+  let hurryFired = false;
+
   // ── DOM ───────────────────────────────────────────────────────────────────
   const canvas   = document.getElementById('gameCanvas');
   const ctx      = canvas.getContext('2d');
@@ -584,9 +588,16 @@ html {
     const s = timerSeconds % 60;
     timeText.textContent = m + ':' + String(s).padStart(2,'0');
     canvasWrapper.className = pct <= 15 ? 'danger' : '';
+
+    // ── SFX.hurry() when timer enters danger zone (pct <= 25) ──
+    if (pct <= 25 && !hurryFired && gameActive) {
+      hurryFired = true;
+      if (typeof SFX !== 'undefined' && SFX.hurry) SFX.hurry();
+    }
   }
 
   function startTimer() {
+    hurryFired = false;
     clearInterval(timerInterval);
     timerSeconds = GAME_TIME;
     updateTimerUI();
@@ -654,6 +665,7 @@ html {
     score = 0;
     markedCount = 0;
     gameActive = true;
+    hurryFired = false;
     resetTable();
     scoreEl.textContent = score;
     draw();
@@ -664,6 +676,9 @@ html {
     stopTimer();
     gameActive = false;
     canvasWrapper.className = '';
+
+    // ── SFX.over() ──
+    if (typeof SFX !== 'undefined' && SFX.over) SFX.over();
 
     const finalScore = score;
     scoreEl.textContent = score;
@@ -699,6 +714,9 @@ html {
 
     // If we have a marked group selected and click it again → remove
     if (markedCount > 1 && cellState(gx, gy) < 0) {
+      // ── SFX.good() on successful removal ──
+      if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
+
       // Remove marked tiles
       resetTable(v => v < 0 ? 0 : v);
       score += points(markedCount);
@@ -709,6 +727,10 @@ html {
       // Board cleared or stuck — flash a message then refresh tiles, keep score & timer
       if (countRemaining() === 0 || !hasMovesLeft()) {
         draw();
+        // ── SFX.good() on board cleared ──
+        if (countRemaining() === 0) {
+          if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
+        }
         flashMessage(countRemaining() === 0 ? '🎉 BOARD CLEARED! +' + points(markedCount) : '🚫 NO MOVES — NEW TILES!');
         setTimeout(() => { resetTable(); markedCount = 0; draw(); }, 900);
         return;
@@ -724,6 +746,8 @@ html {
       const c = cellState(gx, gy);
       markedCount = markGroup(gx, gy, c);
       if (markedCount < 2) {
+        // ── SFX.bad() on single-tile click (no group) ──
+        if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
         // Single tile — unmark immediately
         resetTable(Math.abs);
         markedCount = 0;

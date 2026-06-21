@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tri Pillars Solitaire</title>
     <link href="https://fonts.googleapis.com/css2?family=Chango&family=Anonymous+Pro:wght@400;700&display=swap" rel="stylesheet" />
+    <script src="sfx.js"></script>
     <style>
         /* ── reset & base ── */
         *,
@@ -848,6 +849,9 @@
         let boardRefreshCount = 0;
         let pendingEntry = null; // score entry waiting for initials
 
+        // ── one-shot hurry flag ──
+        let hurryFired = false;
+
         // ════════════════════════════════════════════════════════
         //  Card helpers
         // ════════════════════════════════════════════════════════
@@ -905,9 +909,16 @@
             const s = timerSeconds % 60;
             document.getElementById('time-remaining').textContent = m + ':' + String(s).padStart(2, '0');
             document.getElementById('game-wrap').className = pct <= 12 ? 'danger' : '';
+
+            // ── SFX.hurry() when timer enters danger zone (pct <= 20) ──
+            if (pct <= 20 && !hurryFired && !gameOver) {
+                hurryFired = true;
+                if (typeof SFX !== 'undefined' && SFX.hurry) SFX.hurry();
+            }
         }
 
         function startTimer() {
+            hurryFired = false;
             clearInterval(timerHandle);
             timerHandle = setInterval(() => {
                 timerSeconds--;
@@ -1118,6 +1129,7 @@
             gameOver = false;
             boardRefreshCount = 0;
             pendingEntry = null;
+            hurryFired = false;
             document.getElementById('game-wrap').className = '';
             document.getElementById('end-initials-section').style.display = 'none';
 
@@ -1168,7 +1180,13 @@
         function playTableauCard(row, col) {
             if (gameOver) return;
             const card = tableau[row][col];
-            if (!card || !isFree(row, col) || !canPlay(card)) return;
+            if (!card || !isFree(row, col) || !canPlay(card)) {
+                // ── SFX.bad() on invalid click (only if card exists and is free but not playable) ──
+                if (card && isFree(row, col) && !canPlay(card)) {
+                    if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
+                }
+                return;
+            }
 
             history.push(snapshot());
 
@@ -1176,6 +1194,9 @@
             if (streak > bestStreak) bestStreak = streak;
             const pts = PTS_CARD_BASE + (streak - 1) * PTS_STREAK_MULT;
             score += pts;
+
+            // ── SFX.good() on successful play ──
+            if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
 
             if (streak === 3) showStreakFlash('🔥 Streak ×3!');
             else if (streak === 5) showStreakFlash('💥 Streak ×5!');
@@ -1228,6 +1249,9 @@
             stopTimer();
             gameOver = true;
             document.getElementById('game-wrap').className = '';
+
+            // ── SFX.over() ──
+            if (typeof SFX !== 'undefined' && SFX.over) SFX.over();
 
             const finalScore = score;
             const isTimer = reason === 'timer';

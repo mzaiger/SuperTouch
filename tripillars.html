@@ -579,17 +579,14 @@
 
         /* ── top 10 panel ── */
         #top10-panel {
-            display: none;
+            display: block;
             width: 100%;
             max-width: 700px;
             background: #1a3a4a;
             border-radius: 8px;
             padding: 16px 20px;
-            margin-top: 10px;
+            margin: 10px auto;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        }
-        #top10-panel.visible {
-            display: block;
         }
         #top10-title {
             font-family: 'Chango', cursive;
@@ -767,6 +764,13 @@
     <!-- STATUS -->
     <div id="status-bar">&nbsp;</div>
 
+    <!-- TOP 10 PANEL -->
+    <div id="top10-panel">
+        <div id="top10-title">🏆 TOP 10 SCORES</div>
+        <div id="top10-list"></div>
+        <button id="top10-clear">clear scores</button>
+    </div>
+
     <!-- GAME AREA -->
     <div id="game-wrap">
         <div id="game-area"></div>
@@ -799,13 +803,6 @@
                 <button class="o-btn secondary" id="end-top10">🏆 Top 10</button>
             </div>
         </div>
-    </div>
-
-    <!-- TOP 10 PANEL -->
-    <div id="top10-panel">
-        <div id="top10-title">🏆 TOP 10 SCORES</div>
-        <div id="top10-list"></div>
-        <button id="top10-clear">clear scores</button>
     </div>
 
     <script>
@@ -1487,9 +1484,7 @@
         //  Top 10
         // ════════════════════════════════════════════════════════
         function showTop10() {
-            const panel = document.getElementById('top10-panel');
-            panel.classList.toggle('visible');
-            if (panel.classList.contains('visible')) renderTop10();
+            document.getElementById('top10-panel').scrollIntoView({ behavior: 'smooth' });
         }
 
         function renderTop10() {
@@ -1578,6 +1573,7 @@
 
         // ── Start ──
         newGame();
+        renderTop10();
     </script>
 </body>
 </html>

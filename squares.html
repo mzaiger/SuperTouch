@@ -589,7 +589,7 @@ html {
     timeText.textContent = m + ':' + String(s).padStart(2,'0');
     canvasWrapper.className = pct <= 15 ? 'danger' : '';
 
-    // ── SFX.hurry() when timer enters danger zone (pct <= 25) ──
+    // ── SFX.hurry() when timer turns red (pct <= 25) ──
     if (pct <= 25 && !hurryFired && gameActive) {
       hurryFired = true;
       if (typeof SFX !== 'undefined' && SFX.hurry) SFX.hurry();

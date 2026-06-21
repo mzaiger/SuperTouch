@@ -245,20 +245,19 @@
             zoom: 1.15;
         }
 
-        /* ─── PHONE ONLY: 50% resolution ─────────────────────────────────────── */
+        /* ─── PHONE ONLY: scale to fit width, height maintains aspect ratio ─── */
         @media (max-width: 600px) {
             body {
                 overflow: hidden;
-                width: 100vw;
-                height: 100vh;
                 margin: 0;
                 padding: 0;
             }
 
             .arcade-wrapper {
-                transform: scale(0.5);
+                /* scale so that the visual width equals 100vw */
+                transform: scale(calc(100vw / 900));
                 transform-origin: center center;
-                /* keep original dimensions; scale handles visual size */
+                /* keep original dimensions; scaling handles the visual size */
             }
         }
     </style>

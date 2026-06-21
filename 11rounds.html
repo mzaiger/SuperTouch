@@ -283,6 +283,9 @@ html {
             <div class="hud-box">
                 <span style="color: #00aaff;">SCORE:</span> <span id="scoreDisplay" class="text-glow">0</span>
             </div>
+            <div class="hud-box" style="border-color: #ff44aa;">
+                <span style="color: #ff44aa;">BEST:</span> <span id="bestDisplay" class="text-glow">0</span>
+            </div>
         </div>
 
         <button id="drawBtn" style="position: absolute; left: 240px; top: 520px; z-index: 60; margin: 0; padding: 12px 20px; font-size: 1.1em;">DRAW / SKIP</button>
@@ -326,6 +329,7 @@ html {
         const endOverlay = document.getElementById('end-overlay');
         const leaderboardOverlay = document.getElementById('leaderboard-overlay');
         const deckCountDisplay = document.getElementById('deck-count');
+        const bestDisplay = document.getElementById('bestDisplay');
 
         // --- Layout Definitions (positions unchanged) ---
         const tablePositions = [
@@ -725,6 +729,8 @@ html {
         function updateHUD() {
             scoreDisplay.innerText = score;
             sumDisplay.innerText = currentSum;
+            let board = getLeaderboard();
+            bestDisplay.innerText = board.length > 0 ? board[0].score : 0;
         }
 
         // --- Leaderboard ---

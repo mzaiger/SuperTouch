@@ -236,30 +236,75 @@ html {
     .ctrl-btn:active { transform: scale(0.97); }
 
     #btn-new { background: #1a3a4a; color: #7fffd4; }
-    #btn-top10 { background: #2c5f7a; color: #e0f4ff; }
 
-    /* ── TOP 10 PANEL ── */
-    #top10-panel {
+    /* ── NAME PROMPT & TOP 10 OVERLAYS ── */
+    .full-overlay {
       display: none;
-      width: 100%;
-      max-width: 620px;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .full-overlay.visible { display: flex; }
+
+    .name-box {
       background: #1a3a4a;
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin-top: 10px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      border-radius: 10px;
+      padding: 28px 32px;
+      text-align: center;
+      max-width: 380px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
 
-    #top10-panel.visible { display: block; }
-
-    #top10-title {
+    .name-box h2 {
       font-family: 'Chango', cursive;
-      font-size: 20px;
       color: #7fffd4;
-      margin-bottom: 12px;
-      letter-spacing: 1px;
+      font-size: 22px;
+      margin-bottom: 6px;
     }
 
+    .name-box p {
+      color: #cce8f0;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    #name-input {
+      width: 100%;
+      background: #0d2030;
+      border: 2px solid #2c5f7a;
+      border-radius: 6px;
+      color: #7fffd4;
+      font-family: 'Anonymous Pro', monospace;
+      font-size: 18px;
+      padding: 8px 12px;
+      text-align: center;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+      outline: none;
+    }
+
+    #name-input:focus { border-color: #7fffd4; }
+
+    .action-submit {
+      font-family: 'Chango', cursive;
+      font-size: 16px;
+      background: #2ecc71;
+      color: #1a3a4a;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 28px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .action-submit:hover { background: #27ae60; }
+
+    /* ── TOP 10 LIST ITEMS ── */
     .top10-row {
       display: flex;
       align-items: center;
@@ -267,6 +312,7 @@ html {
       padding: 5px 0;
       border-bottom: 1px solid rgba(127,255,212,0.12);
       font-size: 14px;
+      text-align: left;
     }
 
     .top10-row:last-child { border-bottom: none; }
@@ -314,72 +360,6 @@ html {
 
     #top10-clear:hover { color: #e74c3c; border-color: #e74c3c; }
 
-    /* ── NAME PROMPT OVERLAY ── */
-    #name-prompt {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-
-    #name-prompt.visible { display: flex; }
-
-    .name-box {
-      background: #1a3a4a;
-      border-radius: 10px;
-      padding: 28px 32px;
-      text-align: center;
-      max-width: 320px;
-      width: 90%;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    }
-
-    .name-box h2 {
-      font-family: 'Chango', cursive;
-      color: #7fffd4;
-      font-size: 22px;
-      margin-bottom: 6px;
-    }
-
-    .name-box p {
-      color: #cce8f0;
-      font-size: 13px;
-      margin-bottom: 14px;
-    }
-
-    #name-input {
-      width: 100%;
-      background: #0d2030;
-      border: 2px solid #2c5f7a;
-      border-radius: 6px;
-      color: #7fffd4;
-      font-family: 'Anonymous Pro', monospace;
-      font-size: 18px;
-      padding: 8px 12px;
-      text-align: center;
-      letter-spacing: 2px;
-      margin-bottom: 14px;
-      outline: none;
-    }
-
-    #name-input:focus { border-color: #7fffd4; }
-
-    #name-submit {
-      font-family: 'Chango', cursive;
-      font-size: 16px;
-      background: #2ecc71;
-      color: #1a3a4a;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 28px;
-      cursor: pointer;
-    }
-
-    #name-submit:hover { background: #27ae60; }
-
     /* ── FLICKER for game over ── */
     @keyframes pulse-danger {
       0%, 100% { box-shadow: 0 6px 24px rgba(0,0,0,0.3); }
@@ -390,7 +370,6 @@ html {
 </head>
 <body>
 
-<!-- DASHBOARD -->
 <div id="dashboard">
   <div class="dash-row">
     <div class="dash-cell">
@@ -408,7 +387,6 @@ html {
   </div>
 </div>
 
-<!-- TIMER -->
 <div id="timer-section">
   <div class="timer-label-row">
     <span class="timer-label">TIME</span>
@@ -419,7 +397,6 @@ html {
   </div>
 </div>
 
-<!-- GAME CANVAS -->
 <div id="canvas-wrapper">
   <canvas id="gameCanvas" width="520" height="260"></canvas>
   <div id="overlay">
@@ -429,27 +406,26 @@ html {
   </div>
 </div>
 
-<!-- CONTROLS -->
 <div id="controls">
   <button class="ctrl-btn" id="btn-new">⟳ NEW GAME</button>
-  <button class="ctrl-btn" id="btn-top10">🏆 TOP 10</button>
 </div>
 
-<!-- TOP 10 PANEL -->
-<div id="top10-panel">
-  <div id="top10-title">🏆 TOP 10 SCORES</div>
-  <div id="top10-list"></div>
-  <button id="top10-clear">clear scores</button>
-</div>
-
-<!-- NAME ENTRY PROMPT -->
-<div id="name-prompt">
+<div id="name-prompt" class="full-overlay">
   <div class="name-box">
     <h2>HIGH SCORE!</h2>
     <p id="name-prompt-detail">Enter your name for the leaderboard</p>
     <input id="name-input" type="text" maxlength="12" placeholder="YOUR NAME" autocomplete="off" />
     <br>
-    <button id="name-submit">SAVE</button>
+    <button id="name-submit" class="action-submit">SAVE</button>
+  </div>
+</div>
+
+<div id="top10-overlay" class="full-overlay" style="z-index: 150;">
+  <div class="name-box">
+    <h2 style="margin-bottom: 12px;">🏆 TOP 10 SCORES</h2>
+    <div id="top10-list" style="margin-bottom: 20px;"></div>
+    <button id="top10-play-again" class="action-submit">PLAY AGAIN</button>
+    <button id="top10-clear">clear scores</button>
   </div>
 </div>
 
@@ -496,7 +472,7 @@ html {
   const overlayTitle  = document.getElementById('overlay-title');
   const overlayDetail = document.getElementById('overlay-detail');
   const overlayBtn    = document.getElementById('overlay-btn');
-  const top10Panel    = document.getElementById('top10-panel');
+  const top10Overlay  = document.getElementById('top10-overlay');
   const top10List     = document.getElementById('top10-list');
   const namePrompt    = document.getElementById('name-prompt');
   const nameInput     = document.getElementById('name-input');
@@ -589,7 +565,7 @@ html {
     timeText.textContent = m + ':' + String(s).padStart(2,'0');
     canvasWrapper.className = pct <= 15 ? 'danger' : '';
 
-    // ── SFX.hurry() when timer enters danger zone (pct <= 25) ──
+    // ── SFX.hurry() when timer turns red (pct <= 25) ──
     if (pct <= 25 && !hurryFired && gameActive) {
       hurryFired = true;
       if (typeof SFX !== 'undefined' && SFX.hurry) SFX.hurry();
@@ -661,6 +637,7 @@ html {
   // ── GAME LIFECYCLE ────────────────────────────────────────────────────────
   function newGame() {
     overlay.classList.remove('visible');
+    top10Overlay.classList.remove('visible');
     canvasWrapper.className = '';
     score = 0;
     markedCount = 0;
@@ -791,6 +768,7 @@ html {
     top10 = top10.slice(0, 10);
     saveTop10(top10);
     renderTop10();
+    top10Overlay.classList.add('visible');
   }
 
   function renderTop10() {
@@ -814,9 +792,9 @@ html {
 
   overlayBtn.addEventListener('click', newGame);
 
-  document.getElementById('btn-top10').addEventListener('click', () => {
-    top10Panel.classList.toggle('visible');
-    if (top10Panel.classList.contains('visible')) renderTop10();
+  document.getElementById('top10-play-again').addEventListener('click', () => {
+    top10Overlay.classList.remove('visible');
+    newGame();
   });
 
   document.getElementById('top10-clear').addEventListener('click', () => {

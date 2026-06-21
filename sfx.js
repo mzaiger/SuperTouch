@@ -29,7 +29,7 @@
     /** Wrong click / mismatch / error */
     bad:   function () { _play('bad',   'fx/wrong-sound.mp3');   },
     /** Timer entering danger zone (turns red) */
-    hurry: function () { _play('hurry', 'fx/FF7-boost.mp3');     },
+    hurry: function () { _play('hurry', 'fx/ticking-sound.mp3');     },
     /** Game over (loss or end of game) */
     over:  function () { _play('over',  'fx/FF7-gameover.mp3');  },
     /** UI click — menu tile, main-menu button */

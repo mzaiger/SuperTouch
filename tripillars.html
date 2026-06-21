@@ -211,10 +211,6 @@
             background: #2c5f7a;
             color: #e0f4ff;
         }
-        #btn-top10 {
-            background: #3a7a6a;
-            color: #a8f0d8;
-        }
 
         /* ── status ── */
         #status-bar {
@@ -557,17 +553,6 @@
         #btn-save-initials:hover {
             transform: scale(1.05);
         }
-        #btn-save-initials:disabled {
-            opacity: 0.5;
-            cursor: default;
-            transform: none;
-        }
-        #initials-saved-msg {
-            color: #2ecc71;
-            font-size: 0.8rem;
-            margin-top: 4px;
-            display: none;
-        }
 
         .overlay-btns {
             display: flex;
@@ -577,26 +562,7 @@
             flex-wrap: wrap;
         }
 
-        /* ── top 10 panel ── */
-        #top10-panel {
-            display: none;
-            width: 100%;
-            max-width: 700px;
-            background: #1a3a4a;
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-top: 10px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        }
-        #top10-panel.visible {
-            display: block;
-        }
-        #top10-title {
-            font-family: 'Chango', cursive;
-            font-size: 18px;
-            color: #7fffd4;
-            margin-bottom: 10px;
-        }
+        /* ── top 10 overlay specific ── */
         #hs-table {
             width: 100%;
             border-collapse: collapse;
@@ -650,21 +616,6 @@
             font-size: 13px;
             text-align: center;
             padding: 12px 0;
-        }
-        #top10-clear {
-            font-family: 'Anonymous Pro', monospace;
-            font-size: 11px;
-            background: none;
-            border: 1px solid #2c5f7a;
-            color: #5faabb;
-            border-radius: 4px;
-            padding: 4px 10px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        #top10-clear:hover {
-            color: #e74c3c;
-            border-color: #e74c3c;
         }
 
         .o-btn {
@@ -720,7 +671,6 @@
 </head>
 <body>
 
-    <!-- DASHBOARD -->
     <div id="dashboard">
         <div class="dash-row">
             <div class="dash-cell">
@@ -746,7 +696,6 @@
         </div>
     </div>
 
-    <!-- TIMER -->
     <div id="timer-section">
         <div class="timer-label-row">
             <span class="timer-label">TIME</span>
@@ -757,55 +706,50 @@
         </div>
     </div>
 
-    <!-- CONTROLS -->
     <div id="controls">
         <button class="ctrl-btn" id="btn-new">⟳ NEW GAME</button>
         <button class="ctrl-btn" id="btn-undo">↩ UNDO</button>
-        <button class="ctrl-btn" id="btn-top10">🏆 TOP 10</button>
     </div>
 
-    <!-- STATUS -->
     <div id="status-bar">&nbsp;</div>
 
-    <!-- GAME AREA -->
     <div id="game-wrap">
         <div id="game-area"></div>
     </div>
 
-    <!-- STREAK FLASH -->
     <div id="streak-flash"></div>
     <div id="flash-msg"></div>
 
-    <!-- END OVERLAY -->
     <div class="overlay" id="end-overlay">
         <div class="overlay-box">
             <h2 id="end-title">Game Over</h2>
             <div class="sub" id="end-sub"></div>
             <div id="end-new-high" class="new-high" style="display:none">★ New High Score! ★</div>
 
-            <!-- INITIALS SECTION -->
             <div id="end-initials-section">
                 <div class="init-label">🏆 You made the Top 10! Enter your initials:</div>
                 <div class="init-row">
                     <input type="text" id="initials-input" maxlength="3" placeholder="AAA" autocomplete="off" spellcheck="false" />
                     <button id="btn-save-initials">Save</button>
                 </div>
-                <div id="initials-saved-msg">✓ Saved!</div>
             </div>
 
             <div class="score-summary" id="end-summary"></div>
             <div class="overlay-btns">
                 <button class="o-btn primary" id="end-play-again">Play Again</button>
-                <button class="o-btn secondary" id="end-top10">🏆 Top 10</button>
             </div>
         </div>
     </div>
 
-    <!-- TOP 10 PANEL -->
-    <div id="top10-panel">
-        <div id="top10-title">🏆 TOP 10 SCORES</div>
-        <div id="top10-list"></div>
-        <button id="top10-clear">clear scores</button>
+    <div class="overlay" id="top10-overlay">
+        <div class="overlay-box" style="max-width: 500px;">
+            <h2 id="top10-title">🏆 TOP 10 SCORES</h2>
+            <div id="top10-list" style="margin-bottom: 16px;"></div>
+            <div class="overlay-btns">
+                <button class="o-btn primary" id="top10-play-again">Play Again</button>
+                <button id="top10-clear" class="o-btn secondary">Clear Scores</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1119,6 +1063,7 @@
         // ════════════════════════════════════════════════════════
         function newGame() {
             closeOverlay('end-overlay');
+            closeOverlay('top10-overlay');
             stopTimer();
             history = [];
             score = 0;
@@ -1301,14 +1246,11 @@
             const initSection = document.getElementById('end-initials-section');
             const initInput = document.getElementById('initials-input');
             const saveBtn = document.getElementById('btn-save-initials');
-            const savedMsg = document.getElementById('initials-saved-msg');
 
             if (qualifies) {
                 initSection.style.display = 'block';
                 initInput.value = '';
-                savedMsg.style.display = 'none';
                 saveBtn.disabled = false;
-                saveBtn.textContent = 'Save';
                 initInput.focus();
 
                 // Save button handler
@@ -1322,21 +1264,12 @@
                     const rank = addHS(pendingEntry);
                     updateHiDisplay();
 
-                    savedMsg.style.display = 'block';
-                    saveBtn.disabled = true;
-                    saveBtn.textContent = '✓ Saved';
-
-                    // Update summary to show rank
-                    if (rank && rank <= MAX_HS) {
-                        const totalEl = document.querySelector('#end-summary .total span');
-                        if (totalEl) {
-                            totalEl.textContent = '🏆 Rank #' + rank + ' — ' + initials + ' • ' + finalScore;
-                        }
-                        if (rank === 1) {
-                            document.getElementById('end-new-high').style.display = 'block';
-                        }
+                    if (rank === 1) {
+                        document.getElementById('end-new-high').style.display = 'block';
                     }
-                    renderTop10();
+
+                    closeOverlay('end-overlay');
+                    showTop10();
                 };
 
                 // Enter key saves
@@ -1486,9 +1419,8 @@
         //  Top 10
         // ════════════════════════════════════════════════════════
         function showTop10() {
-            const panel = document.getElementById('top10-panel');
-            panel.classList.toggle('visible');
-            if (panel.classList.contains('visible')) renderTop10();
+            document.getElementById('top10-overlay').classList.add('show');
+            renderTop10();
         }
 
         function renderTop10() {
@@ -1525,52 +1457,18 @@
         // ════════════════════════════════════════════════════════
         document.getElementById('btn-new').addEventListener('click', newGame);
         document.getElementById('btn-undo').addEventListener('click', undoMove);
-        document.getElementById('btn-top10').addEventListener('click', showTop10);
         document.getElementById('top10-clear').addEventListener('click', () => {
             if (confirm('Clear all scores?')) { saveHS([]);
                 renderTop10();
                 updateHiDisplay(); }
         });
         document.getElementById('end-play-again').addEventListener('click', () => {
-            // If initials not saved but score qualifies, save with default
-            const initSection = document.getElementById('end-initials-section');
-            if (initSection.style.display === 'block' && pendingEntry) {
-                const savedMsg = document.getElementById('initials-saved-msg');
-                if (savedMsg.style.display !== 'block') {
-                    // Not saved yet — save with default initials
-                    let initials = document.getElementById('initials-input').value.trim().toUpperCase();
-                    if (!initials) initials = '---';
-                    if (initials.length > 3) initials = initials.slice(0, 3);
-                    if (initials.length < 3) initials = initials.padEnd(3, '-');
-                    pendingEntry.initials = initials;
-                    addHS(pendingEntry);
-                    updateHiDisplay();
-                    renderTop10();
-                }
-            }
             pendingEntry = null;
             newGame();
-            closeOverlay('end-overlay');
         });
-        document.getElementById('end-top10').addEventListener('click', () => {
-            // Same save-on-exit logic
-            const initSection = document.getElementById('end-initials-section');
-            if (initSection.style.display === 'block' && pendingEntry) {
-                const savedMsg = document.getElementById('initials-saved-msg');
-                if (savedMsg.style.display !== 'block') {
-                    let initials = document.getElementById('initials-input').value.trim().toUpperCase();
-                    if (!initials) initials = '---';
-                    if (initials.length > 3) initials = initials.slice(0, 3);
-                    if (initials.length < 3) initials = initials.padEnd(3, '-');
-                    pendingEntry.initials = initials;
-                    addHS(pendingEntry);
-                    updateHiDisplay();
-                    renderTop10();
-                }
-            }
-            pendingEntry = null;
-            closeOverlay('end-overlay');
-            showTop10();
+        document.getElementById('top10-play-again').addEventListener('click', () => {
+            closeOverlay('top10-overlay');
+            newGame();
         });
 
         window.addEventListener('resize', () => { if (!gameOver) render(); });

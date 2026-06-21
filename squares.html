@@ -1,819 +1,1480 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Squares</title>
-  <link href="https://fonts.googleapis.com/css2?family=Chango&family=Anonymous+Pro:wght@400;700&display=swap" rel="stylesheet">
-  <script src="sfx.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html {
-            transform: scale(1.2);
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tri Pillars Solitaire</title>
+    <link href="https://fonts.googleapis.com/css2?family=Chango&family=Anonymous+Pro:wght@400;700&display=swap" rel="stylesheet" />
+    <script src="sfx.js"></script>
+    <style>
+        /* ── reset & base ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            transform: scale(1.1);
             transform-origin: top center;
         }
-    body {
-      background: transparent;
-      font-family: 'Anonymous Pro', monospace;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 16px 8px 24px;
-    }
 
-    /* ── HEADER / DASHBOARD ── */
-    #dashboard {
-      width: 100%;
-      max-width: 620px;
-      margin-bottom: 12px;
-    }
+        body {
+            background: transparent;
+            font-family: 'Anonymous Pro', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 14px 8px 24px;
+            user-select: none;
+        }
 
-    .dash-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
+        /* ── dashboard ── */
+        #dashboard {
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 10px;
+        }
+        .dash-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .dash-cell {
+            flex: 1;
+        }
+        .dash-cell.center {
+            flex: 0 0 auto;
+            text-align: center;
+        }
 
-    .dash-cell { flex: 1; }
-    .dash-cell.center { flex: 0 0 auto; text-align: center; }
+        .dash-label {
+            font-family: 'Chango', cursive;
+            font-size: 11px;
+            color: #2c5f7a;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+        }
+        .score-box {
+            background: #1a3a4a;
+            color: #7fffd4;
+            font-family: 'Anonymous Pro', monospace;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 6px;
+            letter-spacing: 2px;
+            min-width: 90px;
+            display: inline-block;
+            text-align: right;
+        }
+        .score-box.dim {
+            color: #5faabb;
+        }
+        .score-box.hot {
+            color: #ff8a65;
+            text-shadow: 0 0 8px #ff5722;
+        }
 
-    .dash-label {
-      font-family: 'Chango', cursive;
-      font-size: 13px;
-      color: #2c5f7a;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
+        #game-title {
+            font-family: 'Chango', cursive;
+            font-size: 28px;
+            color: #44aaff;
+            -webkit-text-stroke: 1px #003388;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        #game-subtitle {
+            font-size: 10px;
+            color: #ffaa00;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+            letter-spacing: 1px;
+        }
 
-    .score-box {
-      background: #1a3a4a;
-      color: #7fffd4;
-      font-family: 'Anonymous Pro', monospace;
-      font-size: 22px;
-      font-weight: 700;
-      padding: 6px 14px;
-      border-radius: 6px;
-      letter-spacing: 2px;
-      min-width: 110px;
-      display: inline-block;
-      text-align: right;
-    }
+        /* ── timer bar ── */
+        #timer-section {
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 10px;
+        }
+        .timer-label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .timer-label {
+            font-family: 'Chango', cursive;
+            font-size: 12px;
+            color: #2c5f7a;
+        }
+        #time-remaining {
+            font-family: 'Anonymous Pro', monospace;
+            font-weight: 700;
+            font-size: 14px;
+            color: #1a3a4a;
+        }
+        .progress-track {
+            background: #5b9bb5;
+            border-radius: 8px;
+            height: 20px;
+            width: 100%;
+            overflow: hidden;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+        }
+        #time-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            border-radius: 8px;
+            transition: width 0.4s linear, background 0.4s;
+            position: relative;
+            overflow: hidden;
+        }
+        #time-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -60px;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(-45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(255, 255, 255, 0.12) 10px,
+                    rgba(255, 255, 255, 0.12) 20px);
+            animation: stripe-move 1.2s linear infinite;
+        }
+        @keyframes stripe-move {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                transform: translateX(40px);
+            }
+        }
+        #time-bar.warning {
+            background: linear-gradient(90deg, #f39c12, #e67e22);
+        }
+        #time-bar.danger {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
 
-    .score-box.dim { color: #5faabb; }
+        @keyframes pulse-danger {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(231, 76, 60, 0.5);
+            }
+        }
+        #game-wrap.danger {
+            animation: pulse-danger 0.6s ease infinite;
+        }
 
-    #game-title {
-      font-family: 'Chango', cursive;
-      font-size: 32px;
-      color: #44aaff;
-      -webkit-text-stroke: 1px #003388;
-      text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
-      line-height: 1;
-      margin-bottom: 4px;
-    }
+        /* ── controls ── */
+        #controls {
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .ctrl-btn {
+            flex: 1;
+            font-family: 'Chango', cursive;
+            font-size: 13px;
+            padding: 8px 0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            letter-spacing: 0.5px;
+        }
+        .ctrl-btn:hover {
+            transform: scale(1.03);
+        }
+        .ctrl-btn:active {
+            transform: scale(0.97);
+        }
+        #btn-new {
+            background: #1a3a4a;
+            color: #7fffd4;
+        }
+        #btn-undo {
+            background: #2c5f7a;
+            color: #e0f4ff;
+        }
 
-    #game-subtitle {
-      font-size: 11px;
-      color: #ffaa00;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
-      letter-spacing: 1px;
-    }
+        /* ── status ── */
+        #status-bar {
+            width: 100%;
+            max-width: 700px;
+            text-align: center;
+            font-size: 12px;
+            color: #1a3a4a;
+            font-weight: 700;
+            min-height: 18px;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
 
-    /* ── TIMER BAR ── */
-    #timer-section {
-      width: 100%;
-      max-width: 620px;
-      margin-bottom: 10px;
-    }
+        /* ── game area ── */
+        #game-wrap {
+            width: 100%;
+            max-width: 700px;
+            background: transparent;
+            border-radius: 0;
+            box-shadow: none;
+            overflow: hidden;
+        }
+        #game-area {
+            position: relative;
+            width: 100%;
+            min-height: 380px;
+        }
 
-    .timer-label-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-    }
+        /* ── card styling (pure CSS) ── */
+        .card {
+            position: absolute;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: box-shadow 0.15s, transform 0.15s;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Anonymous Pro', monospace;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 1px solid #ccc;
+            overflow: hidden;
+        }
+        .card .rank-top {
+            position: absolute;
+            top: 4px;
+            left: 6px;
+            font-size: 0.65rem;
+            line-height: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .card .rank-bottom {
+            position: absolute;
+            bottom: 4px;
+            right: 6px;
+            font-size: 0.65rem;
+            line-height: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: rotate(180deg);
+        }
+        .card .suit-center {
+            font-size: 1.8rem;
+            line-height: 1;
+            opacity: 0.85;
+        }
+        .card .suit-center.small {
+            font-size: 1.2rem;
+        }
+        .card .rank-top .suit-icon,
+        .card .rank-bottom .suit-icon {
+            font-size: 0.5rem;
+            margin-top: -2px;
+        }
+        .card.red {
+            color: #cc2233;
+        }
+        .card.black {
+            color: #222;
+        }
 
-    .timer-label {
-      font-family: 'Chango', cursive;
-      font-size: 13px;
-      color: #2c5f7a;
-    }
+        /* card back */
+        .card-back {
+            background: #1a3a4a;
+            border: 2px solid #2c5f7a;
+            background-image:
+                repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 6px,
+                    rgba(127, 255, 212, 0.07) 6px,
+                    rgba(127, 255, 212, 0.07) 12px),
+                repeating-linear-gradient(-45deg,
+                    transparent,
+                    transparent 6px,
+                    rgba(127, 255, 212, 0.07) 6px,
+                    rgba(127, 255, 212, 0.07) 12px);
+            position: relative;
+        }
+        .card-back::after {
+            content: '♠';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: rgba(127, 255, 212, 0.20);
+        }
+        .card-back .inner-diamond {
+            width: 55%;
+            height: 55%;
+            border: 2px solid rgba(127, 255, 212, 0.15);
+            border-radius: 4px;
+            transform: rotate(45deg);
+            position: absolute;
+        }
+        .card-back .inner-diamond::after {
+            content: '♦';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            color: rgba(127, 255, 212, 0.10);
+            transform: rotate(-45deg);
+        }
 
-    #time-remaining {
-      font-family: 'Anonymous Pro', monospace;
-      font-weight: 700;
-      font-size: 15px;
-      color: #1a3a4a;
-    }
+        .card.playable {
+            box-shadow: 0 0 0 2px #7fffd4, 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        .card.playable:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0 0 3px #7fffd4, 0 8px 20px rgba(0, 0, 0, 0.5);
+        }
+        .card.dimmed {
+            opacity: 0.45;
+        }
+        .card.freeslot {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            box-shadow: none;
+            cursor: default;
+        }
 
-    .progress-track {
-      background: #5b9bb5;
-      border-radius: 8px;
-      height: 22px;
-      width: 100%;
-      overflow: hidden;
-      box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
-    }
+        /* empty slot label */
+        .slot-label {
+            position: absolute;
+            font-size: 0.55rem;
+            color: #5faabb;
+            font-family: 'Anonymous Pro', monospace;
+            letter-spacing: 1px;
+            text-align: center;
+            pointer-events: none;
+            opacity: 0.7;
+        }
 
-    #time-bar {
-      height: 100%;
-      background: linear-gradient(90deg, #2ecc71, #27ae60);
-      border-radius: 8px;
-      transition: width 0.4s linear, background 0.4s;
-      position: relative;
-      overflow: hidden;
-    }
+        /* ── streak flash ── */
+        #streak-flash {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Chango', cursive;
+            font-size: 2rem;
+            color: #7fffd4;
+            text-shadow: 0 0 20px rgba(127, 255, 212, 0.8);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 900;
+            transition: opacity 0.3s;
+        }
+        #streak-flash.show {
+            opacity: 1;
+        }
 
-    #time-bar::after {
-      content: '';
-      position: absolute;
-      top: 0; left: -60px; right: 0; bottom: 0;
-      background: repeating-linear-gradient(
-        -45deg,
-        transparent,
-        transparent 10px,
-        rgba(255,255,255,0.12) 10px,
-        rgba(255,255,255,0.12) 20px
-      );
-      animation: stripe-move 1.2s linear infinite;
-    }
+        /* ── flash message ── */
+        #flash-msg {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(26, 58, 74, 0.92);
+            color: #7fffd4;
+            font-family: 'Chango', cursive;
+            font-size: 1.4rem;
+            padding: 18px 36px;
+            border-radius: 10px;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 850;
+            transition: opacity 0.3s;
+            text-align: center;
+            border: 2px solid #7fffd4;
+        }
+        #flash-msg.show {
+            opacity: 1;
+        }
 
-    @keyframes stripe-move {
-      from { transform: translateX(0); }
-      to { transform: translateX(40px); }
-    }
+        /* ── overlay ── */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .overlay.show {
+            display: flex;
+        }
+        .overlay-box {
+            background: #1a3a4a;
+            border: 2px solid #7fffd4;
+            border-radius: 14px;
+            padding: 28px 36px;
+            text-align: center;
+            min-width: 300px;
+            max-width: 520px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .overlay-box h2 {
+            font-family: 'Chango', cursive;
+            font-size: 1.8rem;
+            color: #7fffd4;
+            margin-bottom: 6px;
+        }
+        .overlay-box .sub {
+            font-size: 0.88rem;
+            color: #a8d8ea;
+            margin-bottom: 16px;
+        }
 
-    #time-bar.warning {
-      background: linear-gradient(90deg, #f39c12, #e67e22);
-    }
-    #time-bar.danger {
-      background: linear-gradient(90deg, #e74c3c, #c0392b);
-    }
+        .score-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 16px;
+            margin: 14px 0 18px;
+            text-align: left;
+        }
+        .score-summary .item span {
+            color: #5faabb;
+            font-size: 0.72rem;
+            display: block;
+        }
+        .score-summary .item strong {
+            color: #e0f4ff;
+            font-size: 1rem;
+        }
+        .score-summary .total {
+            grid-column: 1/-1;
+            border-top: 1px solid rgba(127, 255, 212, 0.2);
+            padding-top: 10px;
+            text-align: center;
+        }
+        .score-summary .total span {
+            font-size: 0.78rem;
+            color: #5faabb;
+        }
+        .score-summary .total strong {
+            font-size: 1.6rem;
+            color: #7fffd4;
+            display: block;
+        }
+        .new-high {
+            color: #ff8a65;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            animation: pulse-anim 1s infinite;
+        }
+        @keyframes pulse-anim {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.4;
+            }
+        }
 
-    /* ── CANVAS WRAPPER ── */
-    #canvas-wrapper {
-      position: relative;
-      display: inline-block;
-    }
+        /* ── initials section in overlay ── */
+        #end-initials-section {
+            display: none;
+            margin: 10px 0 14px;
+            padding: 10px 14px;
+            background: rgba(44, 95, 122, 0.25);
+            border-radius: 8px;
+            border: 1px solid rgba(127, 255, 212, 0.15);
+        }
+        #end-initials-section .init-label {
+            color: #7fffd4;
+            font-size: 0.82rem;
+            margin-bottom: 6px;
+        }
+        #end-initials-section .init-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        #initials-input {
+            background: #2c5f7a;
+            color: #fff;
+            border: 2px solid #7fffd4;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 1.2rem;
+            width: 64px;
+            text-align: center;
+            text-transform: uppercase;
+            font-family: 'Anonymous Pro', monospace;
+            font-weight: 700;
+            outline: none;
+        }
+        #initials-input:focus {
+            border-color: #2ecc71;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.3);
+        }
+        #btn-save-initials {
+            font-family: 'Chango', cursive;
+            font-size: 12px;
+            padding: 4px 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #2ecc71;
+            color: #1a3a4a;
+            transition: transform 0.1s;
+        }
+        #btn-save-initials:hover {
+            transform: scale(1.05);
+        }
 
-    #gameCanvas {
-      display: block;
-      border-radius: 8px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.3);
-      cursor: pointer;
-      touch-action: none;
-    }
+        .overlay-btns {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
 
-    /* ── OVERLAY MESSAGES ── */
-    #overlay {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      background: rgba(26,58,74,0.88);
-      backdrop-filter: blur(2px);
-      gap: 14px;
-    }
+        /* ── top 10 overlay specific ── */
+        #hs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        #hs-table th {
+            color: #5faabb;
+            font-weight: normal;
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 3px 6px;
+            border-bottom: 1px solid rgba(127, 255, 212, 0.15);
+            font-family: 'Chango', cursive;
+        }
+        #hs-table td {
+            padding: 5px 6px;
+            color: #cce8f0;
+            border-bottom: 1px solid rgba(127, 255, 212, 0.06);
+        }
+        #hs-table tr.highlight td {
+            color: #7fffd4;
+            font-weight: bold;
+        }
+        #hs-table td.rank {
+            color: #5faabb;
+            text-align: center;
+        }
+        #hs-table td.rank.gold {
+            color: #f1c40f;
+        }
+        #hs-table td.rank.silver {
+            color: #bdc3c7;
+        }
+        #hs-table td.rank.bronze {
+            color: #cd7f32;
+        }
+        #hs-table td.pts {
+            text-align: right;
+            color: #7fffd4;
+            font-weight: 700;
+        }
+        #hs-table td.initials {
+            text-align: center;
+            font-weight: 700;
+            color: #a8d8ea;
+            letter-spacing: 1px;
+        }
+        .top10-empty {
+            color: #5faabb;
+            font-size: 13px;
+            text-align: center;
+            padding: 12px 0;
+        }
 
-    #overlay.visible { display: flex; }
+        .o-btn {
+            font-family: 'Chango', cursive;
+            font-size: 14px;
+            padding: 9px 22px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .o-btn:hover {
+            transform: scale(1.04);
+        }
+        .o-btn.primary {
+            background: #2ecc71;
+            color: #1a3a4a;
+        }
+        .o-btn.secondary {
+            background: #2c5f7a;
+            color: #e0f4ff;
+        }
 
-    #overlay-title {
-      font-family: 'Chango', cursive;
-      font-size: 36px;
-      color: #7fffd4;
-      text-align: center;
-      text-shadow: 2px 2px 0 #000;
-    }
-
-    #overlay-detail {
-      font-size: 15px;
-      color: #cce8f0;
-      text-align: center;
-      line-height: 1.6;
-    }
-
-    #overlay-btn {
-      font-family: 'Chango', cursive;
-      font-size: 18px;
-      background: #2ecc71;
-      color: #1a3a4a;
-      border: none;
-      border-radius: 6px;
-      padding: 10px 32px;
-      cursor: pointer;
-      transition: transform 0.1s, background 0.15s;
-    }
-
-    #overlay-btn:hover { background: #27ae60; transform: scale(1.04); }
-
-    /* ── CONTROLS ── */
-    #controls {
-      width: 100%;
-      max-width: 620px;
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .ctrl-btn {
-      flex: 1;
-      font-family: 'Chango', cursive;
-      font-size: 15px;
-      padding: 9px 0;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: transform 0.1s, opacity 0.15s;
-      letter-spacing: 0.5px;
-    }
-
-    .ctrl-btn:hover { transform: scale(1.03); }
-    .ctrl-btn:active { transform: scale(0.97); }
-
-    #btn-new { background: #1a3a4a; color: #7fffd4; }
-
-    /* ── NAME PROMPT & TOP 10 OVERLAYS ── */
-    .full-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-
-    .full-overlay.visible { display: flex; }
-
-    .name-box {
-      background: #1a3a4a;
-      border-radius: 10px;
-      padding: 28px 32px;
-      text-align: center;
-      max-width: 380px;
-      width: 90%;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    }
-
-    .name-box h2 {
-      font-family: 'Chango', cursive;
-      color: #7fffd4;
-      font-size: 22px;
-      margin-bottom: 6px;
-    }
-
-    .name-box p {
-      color: #cce8f0;
-      font-size: 13px;
-      margin-bottom: 14px;
-    }
-
-    #name-input {
-      width: 100%;
-      background: #0d2030;
-      border: 2px solid #2c5f7a;
-      border-radius: 6px;
-      color: #7fffd4;
-      font-family: 'Anonymous Pro', monospace;
-      font-size: 18px;
-      padding: 8px 12px;
-      text-align: center;
-      letter-spacing: 2px;
-      margin-bottom: 14px;
-      outline: none;
-    }
-
-    #name-input:focus { border-color: #7fffd4; }
-
-    .action-submit {
-      font-family: 'Chango', cursive;
-      font-size: 16px;
-      background: #2ecc71;
-      color: #1a3a4a;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 28px;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    .action-submit:hover { background: #27ae60; }
-
-    /* ── TOP 10 LIST ITEMS ── */
-    .top10-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 5px 0;
-      border-bottom: 1px solid rgba(127,255,212,0.12);
-      font-size: 14px;
-      text-align: left;
-    }
-
-    .top10-row:last-child { border-bottom: none; }
-
-    .t10-rank {
-      font-family: 'Chango', cursive;
-      font-size: 16px;
-      color: #5faabb;
-      width: 28px;
-      text-align: right;
-    }
-
-    .t10-rank.gold   { color: #f1c40f; }
-    .t10-rank.silver { color: #bdc3c7; }
-    .t10-rank.bronze { color: #cd7f32; }
-
-    .t10-name { flex: 1; color: #cce8f0; }
-
-    .t10-score {
-      font-weight: 700;
-      color: #7fffd4;
-      letter-spacing: 1px;
-    }
-
-    .t10-time { color: #7a9eb0; font-size: 12px; width: 44px; text-align: right; }
-
-    .top10-empty {
-      color: #5faabb;
-      font-size: 13px;
-      text-align: center;
-      padding: 12px 0;
-    }
-
-    #top10-clear {
-      font-family: 'Anonymous Pro', monospace;
-      font-size: 11px;
-      background: none;
-      border: 1px solid #2c5f7a;
-      color: #5faabb;
-      border-radius: 4px;
-      padding: 4px 10px;
-      cursor: pointer;
-      margin-top: 12px;
-    }
-
-    #top10-clear:hover { color: #e74c3c; border-color: #e74c3c; }
-
-    /* ── FLICKER for game over ── */
-    @keyframes pulse-danger {
-      0%, 100% { box-shadow: 0 6px 24px rgba(0,0,0,0.3); }
-      50% { box-shadow: 0 0 30px rgba(231,76,60,0.7); }
-    }
-    #canvas-wrapper.danger { animation: pulse-danger 0.6s ease infinite; }
-  </style>
+        /* ── responsive tweaks ── */
+        @media (max-width: 500px) {
+            #game-title {
+                font-size: 20px;
+            }
+            .score-box {
+                font-size: 16px;
+                min-width: 60px;
+                padding: 4px 8px;
+            }
+            .dash-label {
+                font-size: 9px;
+            }
+            .ctrl-btn {
+                font-size: 11px;
+                padding: 6px 0;
+            }
+            .overlay-box {
+                padding: 20px 16px;
+            }
+            .overlay-box h2 {
+                font-size: 1.3rem;
+            }
+            #end-initials-section .init-row {
+                flex-direction: column;
+                gap: 4px;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<div id="dashboard">
-  <div class="dash-row">
-    <div class="dash-cell">
-      <div class="dash-label">SCORE</div>
-      <div class="score-box" id="score-display">0</div>
+    <div id="dashboard">
+        <div class="dash-row">
+            <div class="dash-cell">
+                <div class="dash-label">SCORE</div>
+                <div class="score-box" id="score-val">0</div>
+            </div>
+            <div class="dash-cell">
+                <div class="dash-label">STREAK</div>
+                <div class="score-box" id="streak-val">0</div>
+            </div>
+            <div class="dash-cell center">
+                <div id="game-title">Tri Pillars</div>
+                <div id="game-subtitle">♠ SOLITAIRE ♠</div>
+            </div>
+            <div class="dash-cell" style="text-align:right">
+                <div class="dash-label">CARDS LEFT</div>
+                <div class="score-box dim" id="cards-left-val">28</div>
+            </div>
+            <div class="dash-cell" style="text-align:right">
+                <div class="dash-label">BEST</div>
+                <div class="score-box dim" id="hi-val">—</div>
+            </div>
+        </div>
     </div>
-    <div class="dash-cell center">
-      <div id="game-title">Squares</div>
-      <div id="game-subtitle">CLICK GROUPS · CLEAR THE BOARD</div>
+
+    <div id="timer-section">
+        <div class="timer-label-row">
+            <span class="timer-label">TIME</span>
+            <span id="time-remaining">3:00</span>
+        </div>
+        <div class="progress-track">
+            <div id="time-bar"></div>
+        </div>
     </div>
-    <div class="dash-cell" style="text-align:right">
-      <div class="dash-label">BEST</div>
-      <div class="score-box dim" id="best-display">0</div>
+
+    <div id="controls">
+        <button class="ctrl-btn" id="btn-new">⟳ NEW GAME</button>
+        <button class="ctrl-btn" id="btn-undo">↩ UNDO</button>
     </div>
-  </div>
-</div>
 
-<div id="timer-section">
-  <div class="timer-label-row">
-    <span class="timer-label">TIME</span>
-    <span id="time-remaining">2:00</span>
-  </div>
-  <div class="progress-track">
-    <div id="time-bar"></div>
-  </div>
-</div>
+    <div id="status-bar">&nbsp;</div>
 
-<div id="canvas-wrapper">
-  <canvas id="gameCanvas" width="520" height="260"></canvas>
-  <div id="overlay">
-    <div id="overlay-title">GAME OVER</div>
-    <div id="overlay-detail"></div>
-    <button id="overlay-btn">PLAY AGAIN</button>
-  </div>
-</div>
+    <div id="game-wrap">
+        <div id="game-area"></div>
+    </div>
 
-<div id="controls">
-  <button class="ctrl-btn" id="btn-new">⟳ NEW GAME</button>
-</div>
+    <div id="streak-flash"></div>
+    <div id="flash-msg"></div>
 
-<div id="name-prompt" class="full-overlay">
-  <div class="name-box">
-    <h2>HIGH SCORE!</h2>
-    <p id="name-prompt-detail">Enter your name for the leaderboard</p>
-    <input id="name-input" type="text" maxlength="12" placeholder="YOUR NAME" autocomplete="off" />
-    <br>
-    <button id="name-submit" class="action-submit">SAVE</button>
-  </div>
-</div>
+    <div class="overlay" id="end-overlay">
+        <div class="overlay-box">
+            <h2 id="end-title">Game Over</h2>
+            <div class="sub" id="end-sub"></div>
+            <div id="end-new-high" class="new-high" style="display:none">★ New High Score! ★</div>
 
-<div id="top10-overlay" class="full-overlay" style="z-index: 150;">
-  <div class="name-box">
-    <h2 style="margin-bottom: 12px;">🏆 TOP 10 SCORES</h2>
-    <div id="top10-list" style="margin-bottom: 20px;"></div>
-    <button id="top10-play-again" class="action-submit">PLAY AGAIN</button>
-    <button id="top10-clear">clear scores</button>
-  </div>
-</div>
+            <div id="end-initials-section">
+                <div class="init-label">🏆 You made the Top 10! Enter your initials:</div>
+                <div class="init-row">
+                    <input type="text" id="initials-input" maxlength="3" placeholder="AAA" autocomplete="off" spellcheck="false" />
+                    <button id="btn-save-initials">Save</button>
+                </div>
+            </div>
 
-<script>
-(function() {
+            <div class="score-summary" id="end-summary"></div>
+            <div class="overlay-btns">
+                <button class="o-btn primary" id="end-play-again">Play Again</button>
+            </div>
+        </div>
+    </div>
 
-  // ── CONSTANTS ──────────────────────────────────────────────────────────────
-  const WIDTH  = 20;   // columns
-  const HEIGHT = 10;   // rows
-  const TILE   = 26;   // px
-  const BORDER = 0;
-  const GAME_TIME = 120; // seconds
+    <div class="overlay" id="top10-overlay">
+        <div class="overlay-box" style="max-width: 500px;">
+            <h2 id="top10-title">🏆 TOP 10 SCORES</h2>
+            <div id="top10-list" style="margin-bottom: 16px;"></div>
+            <div class="overlay-btns">
+                <button class="o-btn primary" id="top10-play-again">Play Again</button>
+                <button id="top10-clear" class="o-btn secondary">Clear Scores</button>
+            </div>
+        </div>
+    </div>
 
-  // Colour palette (4 colours + empty = index 0)
-  // Each colour: [base, dark shadow, light highlight]
-  const COLORS = [
-    null, // 0 = empty
-    { b:'#e74c3c', d:'#922b21', l:'#f1948a' }, // red
-    { b:'#3498db', d:'#1a5276', l:'#85c1e9' }, // blue
-    { b:'#2ecc71', d:'#1a6638', l:'#82e0aa' }, // green
-    { b:'#f39c12', d:'#7d6608', l:'#f8c471' }, // orange
-  ];
+    <script>
+        // ════════════════════════════════════════════════════════
+        //  Constants
+        // ════════════════════════════════════════════════════════
+        const SUITS = ['c', 'd', 'h', 's'];
+        const RANK_NAMES = { 1: 'A', 11: 'J', 12: 'Q', 13: 'K' };
+        const SUIT_SYMBOLS = { c: '♣', d: '♦', h: '♥', s: '♠' };
+        const SUIT_COLORS = { c: 'black', d: 'red', h: 'red', s: 'black' };
 
-  // ── STATE ──────────────────────────────────────────────────────────────────
-  let table = [];
-  let score = 0;
-  let markedCount = 0; // 0 = none marked, >0 = group selected, -1 = game over
-  let timerSeconds = GAME_TIME;
-  let timerInterval = null;
-  let gameActive = false;
-  let pendingScore = 0; // score to record after name entry
+        const HS_KEY = 'tritowers_scores_v2';
+        const MAX_HS = 10;
+        const GAME_TIME = 180; // 3 minutes
 
-  // ── one-shot hurry flag ──
-  let hurryFired = false;
+        const PTS_CARD_BASE = 50;
+        const PTS_STREAK_MULT = 10;
+        const PTS_DRAW_PEN = -15;
+        const PTS_WIN_BONUS = 300;
+        const PTS_DECK_LEFT = 5;
 
-  // ── DOM ───────────────────────────────────────────────────────────────────
-  const canvas   = document.getElementById('gameCanvas');
-  const ctx      = canvas.getContext('2d');
-  const scoreEl  = document.getElementById('score-display');
-  const bestEl   = document.getElementById('best-display');
-  const timeBar  = document.getElementById('time-bar');
-  const timeText = document.getElementById('time-remaining');
-  const overlay  = document.getElementById('overlay');
-  const overlayTitle  = document.getElementById('overlay-title');
-  const overlayDetail = document.getElementById('overlay-detail');
-  const overlayBtn    = document.getElementById('overlay-btn');
-  const top10Overlay  = document.getElementById('top10-overlay');
-  const top10List     = document.getElementById('top10-list');
-  const namePrompt    = document.getElementById('name-prompt');
-  const nameInput     = document.getElementById('name-input');
-  const nameDetail    = document.getElementById('name-prompt-detail');
-  const canvasWrapper = document.getElementById('canvas-wrapper');
+        // ── card dimensions (base, will be scaled) ──
+        const CARD_W = 120;
+        const CARD_H = 186;
 
-  // ── HELPERS ───────────────────────────────────────────────────────────────
-  const cellState = (x, y) =>
-    x < 0 || y < 0 || x >= WIDTH || y >= HEIGHT ? 0 : table[WIDTH * y + x];
+        // ════════════════════════════════════════════════════════
+        //  Game State
+        // ════════════════════════════════════════════════════════
+        let tableau = [];
+        let deck = [];
+        let waste = [];
+        let history = [];
 
-  const points = (m) => (m - 2) * (m - 2); // (m-2)^2
+        let score = 0;
+        let streak = 0;
+        let bestStreak = 0;
+        let draws = 0;
+        let gameOver = false;
+        let timerSeconds = GAME_TIME;
+        let timerHandle = null;
+        let boardRefreshCount = 0;
+        let pendingEntry = null; // score entry waiting for initials
 
-  function resetTable(fn) {
-    fn = fn || (() => Math.floor(Math.random() * 4) + 1);
-    for (let i = 0; i < WIDTH * HEIGHT; i++) table[i] = fn(table[i]);
-  }
+        // ── one-shot hurry flag ──
+        let hurryFired = false;
 
-  function swap(x1,y1,x2,y2) {
-    let p1 = WIDTH*y1+x1, p2 = WIDTH*y2+x2, t = table[p1];
-    table[p1] = table[p2]; table[p2] = t;
-  }
+        // ════════════════════════════════════════════════════════
+        //  Card helpers
+        // ════════════════════════════════════════════════════════
+        function makeCard(suit, rank) { return { suit, rank }; }
 
-  // Recursively mark a connected group; returns count of newly marked
-  function markGroup(x, y, c) {
-    if (cellState(x,y) <= 0 || c !== cellState(x,y)) return 0;
-    table[WIDTH*y+x] = -c;
-    return 1 + markGroup(x-1,y,c) + markGroup(x,y-1,c)
-             + markGroup(x+1,y,c) + markGroup(x,y+1,c);
-  }
+        function rankDisplay(r) { return RANK_NAMES[r] || r; }
 
-  // Check if any group of 2+ exists
-  function hasMovesLeft() {
-    for (let x=0; x<WIDTH; x++) for (let y=0; y<HEIGHT; y++) {
-      const c = cellState(x,y);
-      if (c > 0) {
-        if (cellState(x+1,y)===c || cellState(x,y+1)===c) return true;
-      }
-    }
-    return false;
-  }
+        function suitSymbol(s) { return SUIT_SYMBOLS[s] || '?'; }
 
-  function countRemaining() {
-    return table.filter(v => v > 0).length;
-  }
+        function suitColor(s) { return SUIT_COLORS[s] || 'black'; }
 
-  // ── DRAW ──────────────────────────────────────────────────────────────────
-  function draw() {
-    const W = canvas.width, H = canvas.height;
-    ctx.fillStyle = '#0d2030';
-    ctx.fillRect(0, 0, W, H);
+        function cardId(c) { return c ? c.suit + c.rank : ''; }
 
-    for (let x = 0; x < WIDTH; x++) {
-      for (let y = 0; y < HEIGHT; y++) {
-        const raw = cellState(x, y);
-        const abs = Math.abs(raw);
-        const marked = raw < 0;
-        if (abs === 0) continue;
-
-        const col = COLORS[abs];
-        const px = x * TILE + BORDER;
-        const py = y * TILE + BORDER;
-
-        // shadow
-        ctx.fillStyle = col.d;
-        ctx.fillRect(px, py, TILE, TILE);
-        // highlight
-        ctx.fillStyle = col.l;
-        ctx.fillRect(px, py, TILE-1, TILE-1);
-        // base
-        ctx.fillStyle = marked ? col.l : col.b;
-        ctx.fillRect(px+1, py+1, TILE-2, TILE-2);
-
-        if (marked) {
-          // inner marker
-          const mp = 6;
-          ctx.fillStyle = col.d;
-          ctx.fillRect(px+mp, py+mp, TILE-mp*2, TILE-mp*2);
+        // ════════════════════════════════════════════════════════
+        //  High Scores
+        // ════════════════════════════════════════════════════════
+        function loadHS() {
+            try { return JSON.parse(localStorage.getItem(HS_KEY)) || []; } catch { return []; }
         }
-      }
-    }
-  }
 
-  // ── TIMER ─────────────────────────────────────────────────────────────────
-  function updateTimerUI() {
-    const pct = timerSeconds / GAME_TIME * 100;
-    timeBar.style.width = pct + '%';
-    timeBar.className = pct > 50 ? '' : pct > 25 ? 'warning' : 'danger';
-    const m = Math.floor(timerSeconds / 60);
-    const s = timerSeconds % 60;
-    timeText.textContent = m + ':' + String(s).padStart(2,'0');
-    canvasWrapper.className = pct <= 15 ? 'danger' : '';
-
-    // ── SFX.hurry() when timer turns red (pct <= 25) ──
-    if (pct <= 25 && !hurryFired && gameActive) {
-      hurryFired = true;
-      if (typeof SFX !== 'undefined' && SFX.hurry) SFX.hurry();
-    }
-  }
-
-  function startTimer() {
-    hurryFired = false;
-    clearInterval(timerInterval);
-    timerSeconds = GAME_TIME;
-    updateTimerUI();
-    timerInterval = setInterval(() => {
-      timerSeconds--;
-      updateTimerUI();
-      if (timerSeconds <= 0) {
-        clearInterval(timerInterval);
-        endGame('⏱ TIME\'S UP!');
-      }
-    }, 1000);
-  }
-
-  function stopTimer() { clearInterval(timerInterval); }
-
-  // ── GRAVITY & COLUMN COMPACTION ────────────────────────────────────────────
-  function compactBoard() {
-    // Drop tiles down
-    for (let x = 0; x < WIDTH; x++) {
-      let changed = true;
-      while (changed) {
-        changed = false;
-        for (let y = 1; y < HEIGHT; y++) {
-          if (!cellState(x,y) && cellState(x,y-1)) {
-            swap(x, y, x, y-1);
-            changed = true;
-          }
+        function saveHS(hs) {
+            try { localStorage.setItem(HS_KEY, JSON.stringify(hs)); } catch {}
         }
-      }
-    }
-    // Shift columns left
-    let changed = true;
-    while (changed) {
-      changed = false;
-      for (let x = 1; x < WIDTH; x++) {
-        if (!cellState(x-1, HEIGHT-1) && cellState(x, HEIGHT-1)) {
-          for (let y = 0; y < HEIGHT; y++) swap(x, y, x-1, y);
-          changed = true;
+
+        function addHS(entry) {
+            const hs = loadHS();
+            hs.push(entry);
+            hs.sort((a, b) => b.score - a.score);
+            const trimmed = hs.slice(0, MAX_HS);
+            saveHS(trimmed);
+            const rank = trimmed.findIndex(e => e.score === entry.score && e.date === entry.date && e.initials === entry
+                .initials);
+            return rank >= 0 ? rank + 1 : null;
         }
-      }
-    }
-  }
 
-  // ── FLASH MESSAGE (brief canvas overlay, no game pause) ──────────────────
-  let flashTimeout = null;
-  function flashMessage(msg) {
-    clearTimeout(flashTimeout);
-    const W = canvas.width, H = canvas.height;
-    ctx.save();
-    ctx.fillStyle = 'rgba(26,58,74,0.82)';
-    ctx.fillRect(0, H/2 - 30, W, 60);
-    ctx.font = 'bold 18px "Anonymous Pro", monospace';
-    ctx.fillStyle = '#7fffd4';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(msg, W/2, H/2);
-    ctx.restore();
-    flashTimeout = setTimeout(() => draw(), 850);
-  }
-
-  // ── GAME LIFECYCLE ────────────────────────────────────────────────────────
-  function newGame() {
-    overlay.classList.remove('visible');
-    top10Overlay.classList.remove('visible');
-    canvasWrapper.className = '';
-    score = 0;
-    markedCount = 0;
-    gameActive = true;
-    hurryFired = false;
-    resetTable();
-    scoreEl.textContent = score;
-    draw();
-    startTimer();
-  }
-
-  function endGame(reason) {
-    stopTimer();
-    gameActive = false;
-    canvasWrapper.className = '';
-
-    // ── SFX.over() ──
-    if (typeof SFX !== 'undefined' && SFX.over) SFX.over();
-
-    const finalScore = score;
-    scoreEl.textContent = score;
-
-    overlayTitle.textContent = reason;
-    let detail = `Final Score: ${finalScore}`;
-    overlayDetail.textContent = detail;
-    overlay.classList.add('visible');
-
-    // Check leaderboard
-    const top10 = getTop10();
-    const qualifies = top10.length < 10 || finalScore > top10[top10.length-1].score;
-    if (finalScore > 0 && qualifies) {
-      pendingScore = finalScore;
-      setTimeout(() => promptName(finalScore, timerSeconds), 800);
-    }
-
-    updateBest(finalScore);
-  }
-
-  // ── CLICK HANDLER ─────────────────────────────────────────────────────────
-  canvas.addEventListener('click', function(e) {
-    if (!gameActive) return;
-
-    const rect  = canvas.getBoundingClientRect();
-    const scaleX = canvas.width  / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const mx = (e.clientX - rect.left) * scaleX;
-    const my = (e.clientY - rect.top)  * scaleY;
-
-    const gx = Math.floor((mx - BORDER) / TILE);
-    const gy = Math.floor((my - BORDER) / TILE);
-
-    // If we have a marked group selected and click it again → remove
-    if (markedCount > 1 && cellState(gx, gy) < 0) {
-      // ── SFX.good() on successful removal ──
-      if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
-
-      // Remove marked tiles
-      resetTable(v => v < 0 ? 0 : v);
-      score += points(markedCount);
-      scoreEl.textContent = score;
-      compactBoard();
-      markedCount = 0;
-
-      // Board cleared or stuck — flash a message then refresh tiles, keep score & timer
-      if (countRemaining() === 0 || !hasMovesLeft()) {
-        draw();
-        // ── SFX.good() on board cleared ──
-        if (countRemaining() === 0) {
-          if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
+        function topScore() {
+            const hs = loadHS();
+            return hs.length ? hs[0].score : null;
         }
-        flashMessage(countRemaining() === 0 ? '🎉 BOARD CLEARED! +' + points(markedCount) : '🚫 NO MOVES — NEW TILES!');
-        setTimeout(() => { resetTable(); markedCount = 0; draw(); }, 900);
-        return;
-      }
-    }
 
-    // Unmark everything
-    resetTable(Math.abs);
-    markedCount = 0;
+        function updateHiDisplay() {
+            const hi = topScore();
+            document.getElementById('hi-val').textContent = hi !== null ? hi : '—';
+        }
 
-    // Mark new group
-    if (gx >= 0 && gy >= 0 && gx < WIDTH && gy < HEIGHT && cellState(gx,gy) > 0) {
-      const c = cellState(gx, gy);
-      markedCount = markGroup(gx, gy, c);
-      if (markedCount < 2) {
-        // ── SFX.bad() on single-tile click (no group) ──
-        if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
-        // Single tile — unmark immediately
-        resetTable(Math.abs);
-        markedCount = 0;
-      }
-    }
+        // ════════════════════════════════════════════════════════
+        //  Timer
+        // ════════════════════════════════════════════════════════
+        function updateTimerUI() {
+            const pct = Math.max(0, (timerSeconds / GAME_TIME) * 100);
+            const bar = document.getElementById('time-bar');
+            bar.style.width = pct + '%';
+            bar.className = pct > 50 ? '' : pct > 20 ? 'warning' : 'danger';
+            const m = Math.floor(timerSeconds / 60);
+            const s = timerSeconds % 60;
+            document.getElementById('time-remaining').textContent = m + ':' + String(s).padStart(2, '0');
+            document.getElementById('game-wrap').className = pct <= 12 ? 'danger' : '';
 
-    draw();
-  });
+            // ── SFX.hurry() when timer enters danger zone (pct <= 20) ──
+            if (pct <= 20 && !hurryFired && !gameOver) {
+                hurryFired = true;
+                if (typeof SFX !== 'undefined' && SFX.hurry) SFX.hurry();
+            }
+        }
 
-  // ── LEADERBOARD ───────────────────────────────────────────────────────────
-  function getTop10() {
-    try { return JSON.parse(localStorage.getItem('samegame_top10') || '[]'); }
-    catch(e) { return []; }
-  }
+        function startTimer() {
+            hurryFired = false;
+            clearInterval(timerHandle);
+            timerHandle = setInterval(() => {
+                timerSeconds--;
+                updateTimerUI();
+                if (timerSeconds <= 0) {
+                    clearInterval(timerHandle);
+                    endGame('timer');
+                }
+            }, 1000);
+        }
 
-  function saveTop10(list) {
-    localStorage.setItem('samegame_top10', JSON.stringify(list));
-  }
+        function stopTimer() { clearInterval(timerHandle); }
 
-  function updateBest(s) {
-    const top = getTop10();
-    const best = top.length ? Math.max(...top.map(r=>r.score)) : 0;
-    const current = Math.max(s, best);
-    bestEl.textContent = current;
-  }
+        // ════════════════════════════════════════════════════════
+        //  Layout – shifted down for better centering
+        // ════════════════════════════════════════════════════════
+        function computeLayout() {
+            const area = document.getElementById('game-area');
+            const aw = area.clientWidth || 700;
+            const padding = 10;
+            const maxWidth = aw - 2 * padding;
 
-  function promptName(finalScore, timeLeft) {
-    nameDetail.textContent = `Score: ${finalScore} — Enter your name!`;
-    nameInput.value = '';
-    namePrompt.classList.add('visible');
-    nameInput.focus();
-  }
+            let scale = Math.min(1, (aw - 16) / 700);
+            let cw = Math.round(CARD_W * scale);
+            const minCw = 45;
 
-  function submitName() {
-    const name = (nameInput.value.trim() || 'PLAYER').toUpperCase().slice(0,12);
-    namePrompt.classList.remove('visible');
-    const entry = { name, score: pendingScore, time: new Date().toLocaleDateString() };
-    let top10 = getTop10();
-    top10.push(entry);
-    top10.sort((a,b) => b.score - a.score);
-    top10 = top10.slice(0, 10);
-    saveTop10(top10);
-    renderTop10();
-    top10Overlay.classList.add('visible');
-  }
+            function totalWidthFor(cw) {
+                const gap = Math.round(cw * 0.18);
+                const towerGap = cw;
+                const towerWidth = 4 * cw + 3 * gap;
+                return 3 * towerWidth + 2 * towerGap;
+            }
 
-  function renderTop10() {
-    const top10 = getTop10();
-    const rankClasses = ['gold','silver','bronze'];
-    if (!top10.length) {
-      top10List.innerHTML = '<div class="top10-empty">No scores yet. Play a game!</div>';
-      return;
-    }
-    top10List.innerHTML = top10.map((r,i) => `
-      <div class="top10-row">
-        <span class="t10-rank ${rankClasses[i]||''}">${i+1}.</span>
-        <span class="t10-name">${r.name}</span>
-        <span class="t10-score">${r.score.toLocaleString()}</span>
-        <span class="t10-time">${r.time||''}</span>
-      </div>`).join('');
-  }
+            if (totalWidthFor(cw) > maxWidth) {
+                const cwFit = maxWidth / 15.62;
+                cw = Math.floor(Math.max(minCw, cwFit));
+            }
 
-  // ── CONTROLS ──────────────────────────────────────────────────────────────
-  document.getElementById('btn-new').addEventListener('click', newGame);
+            const gap = Math.round(cw * 0.18);
+            const towerGap = cw;
+            const towerWidth = 4 * cw + 3 * gap;
+            const totalWidth = 3 * towerWidth + 2 * towerGap;
+            const startX = Math.round((aw - totalWidth) / 2);
 
-  overlayBtn.addEventListener('click', newGame);
+            const hstep = cw + gap;
+            const ch = Math.round(cw * (CARD_H / CARD_W));
 
-  document.getElementById('top10-play-again').addEventListener('click', () => {
-    top10Overlay.classList.remove('visible');
-    newGame();
-  });
+            const vstep = Math.round(ch * 0.65);
 
-  document.getElementById('top10-clear').addEventListener('click', () => {
-    if (confirm('Clear all scores?')) {
-      saveTop10([]);
-      renderTop10();
-      bestEl.textContent = 0;
-    }
-  });
+            // ★ SHIFTED DOWN: topY from 10 → 40 for better vertical centering
+            const topY = 0;
+            const positions = [];
+            for (let r = 0; r < 4; r++) {
+                positions[r] = [];
+                const cardsPerTower = r + 1;
+                const usedW = cardsPerTower * cw + (cardsPerTower - 1) * gap;
+                const towerInset = Math.round((towerWidth - usedW) / 2);
+                const y = topY + r * vstep;
+                for (let tower = 0; tower < 3; tower++) {
+                    const towerX = startX + tower * (towerWidth + towerGap);
+                    for (let i = 0; i < cardsPerTower; i++) {
+                        positions[r].push({
+                            x: towerX + towerInset + i * hstep,
+                            y,
+                            cw,
+                            ch
+                        });
+                    }
+                }
+            }
 
-  document.getElementById('name-submit').addEventListener('click', submitName);
-  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitName(); });
+            // ★ more bottom padding: +25 instead of +10
+            const bottomY = topY + 3 * vstep + ch + 25;
+            return { positions, cw, ch, bottomY, aw };
+        }
 
-  // ── INIT ──────────────────────────────────────────────────────────────────
-  updateTimerUI();
-  updateBest(0);
-  newGame();
+        // ════════════════════════════════════════════════════════
+        //  Game Logic
+        // ════════════════════════════════════════════════════════
+        function isFree(row, col) {
+            if (row === 3) return true;
+            const cardsPerTower = row + 1;
+            const tower = Math.floor(col / cardsPerTower);
+            const posInTower = col % cardsPerTower;
+            const childPerTower = row + 2;
+            const childA = tower * childPerTower + posInTower;
+            const childB = tower * childPerTower + posInTower + 1;
+            return !tableau[row + 1][childA] && !tableau[row + 1][childB];
+        }
 
-})();
-</script>
+        function canPlay(card) {
+            if (!waste.length) return false;
+            const top = waste[waste.length - 1];
+            const diff = Math.abs(card.rank - top.rank);
+            return diff === 1 || diff === 12;
+        }
+
+        function countRemaining() {
+            let n = 0;
+            for (let r = 0; r < 4; r++)
+                for (const c of tableau[r])
+                    if (c) n++;
+            return n;
+        }
+
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        function dealTableau(all, startIdx) {
+            tableau = [];
+            let idx = startIdx;
+            for (let r = 0; r < 4; r++) {
+                tableau[r] = [];
+                for (let i = 0; i < (r + 1) * 3; i++) {
+                    tableau[r].push({ ...all[idx++] });
+                }
+            }
+            return idx;
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  Snapshot / Undo
+        // ════════════════════════════════════════════════════════
+        function snapshot() {
+            return {
+                tableau: tableau.map(row => row.map(c => c ? { ...c } : null)),
+                deck: deck.map(c => ({ ...c })),
+                waste: waste.map(c => ({ ...c })),
+                score,
+                streak,
+                bestStreak,
+                draws,
+                boardRefreshCount
+            };
+        }
+
+        function restore(snap) {
+            tableau = snap.tableau.map(row => row.map(c => c ? { ...c } : null));
+            deck = snap.deck.map(c => ({ ...c }));
+            waste = snap.waste.map(c => ({ ...c }));
+            score = snap.score;
+            streak = snap.streak;
+            bestStreak = snap.bestStreak;
+            draws = snap.draws;
+            boardRefreshCount = snap.boardRefreshCount;
+        }
+
+        function undoMove() {
+            if (!history.length || gameOver) return;
+            restore(history.pop());
+            updateScoreBar();
+            setStatus('');
+            render();
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  Score / UI
+        // ════════════════════════════════════════════════════════
+        function updateScoreBar() {
+            document.getElementById('score-val').textContent = score;
+            document.getElementById('streak-val').textContent = streak;
+            document.getElementById('cards-left-val').textContent = countRemaining();
+            const sv = document.getElementById('streak-val');
+            sv.className = 'score-box' + (streak >= 5 ? ' hot' : '');
+            updateHiDisplay();
+        }
+
+        function setStatus(msg) {
+            document.getElementById('status-bar').textContent = msg || '\u00a0';
+        }
+
+        let streakFlashTimeout = null;
+
+        function showStreakFlash(msg) {
+            const el = document.getElementById('streak-flash');
+            el.textContent = msg;
+            el.classList.add('show');
+            clearTimeout(streakFlashTimeout);
+            streakFlashTimeout = setTimeout(() => el.classList.remove('show'), 900);
+        }
+
+        let boardFlashTimeout = null;
+
+        function showBoardFlash(msg) {
+            const el = document.getElementById('flash-msg');
+            el.textContent = msg;
+            el.classList.add('show');
+            clearTimeout(boardFlashTimeout);
+            boardFlashTimeout = setTimeout(() => el.classList.remove('show'), 1200);
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  New Game
+        // ════════════════════════════════════════════════════════
+        function newGame() {
+            closeOverlay('end-overlay');
+            closeOverlay('top10-overlay');
+            stopTimer();
+            history = [];
+            score = 0;
+            streak = 0;
+            bestStreak = 0;
+            draws = 0;
+            timerSeconds = GAME_TIME;
+            gameOver = false;
+            boardRefreshCount = 0;
+            pendingEntry = null;
+            hurryFired = false;
+            document.getElementById('game-wrap').className = '';
+            document.getElementById('end-initials-section').style.display = 'none';
+
+            let all = [];
+            for (const s of SUITS)
+                for (let r = 1; r <= 13; r++)
+                    all.push(makeCard(s, r));
+            shuffle(all);
+
+            let idx = dealTableau(all, 0);
+            waste = [{ ...all[idx++] }];
+            deck = all.slice(idx).map(c => ({ ...c }));
+
+            updateScoreBar();
+            updateTimerUI();
+            setStatus('');
+            render();
+            startTimer();
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  Board Refresh (clear without ending)
+        // ════════════════════════════════════════════════════════
+        function refreshBoard() {
+            boardRefreshCount++;
+            score += PTS_WIN_BONUS;
+
+            let all = [];
+            for (const s of SUITS)
+                for (let r = 1; r <= 13; r++)
+                    all.push(makeCard(s, r));
+            shuffle(all);
+
+            let idx = dealTableau(all, 0);
+            deck = all.slice(idx).map(c => ({ ...c }));
+
+            streak = 0;
+            history = [];
+
+            updateScoreBar();
+            setStatus('');
+            render();
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  Actions
+        // ════════════════════════════════════════════════════════
+        function playTableauCard(row, col) {
+            if (gameOver) return;
+            const card = tableau[row][col];
+            if (!card || !isFree(row, col) || !canPlay(card)) {
+                // ── SFX.bad() on invalid click (only if card exists and is free but not playable) ──
+                if (card && isFree(row, col) && !canPlay(card)) {
+                    if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
+                }
+                return;
+            }
+
+            history.push(snapshot());
+
+            streak++;
+            if (streak > bestStreak) bestStreak = streak;
+            const pts = PTS_CARD_BASE + (streak - 1) * PTS_STREAK_MULT;
+            score += pts;
+
+            // ── SFX.good() on successful play ──
+            if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
+
+            if (streak === 3) showStreakFlash('🔥 Streak ×3!');
+            else if (streak === 5) showStreakFlash('💥 Streak ×5!');
+            else if (streak === 7) showStreakFlash('⚡ Streak ×7!');
+            else if (streak >= 10 && streak % 5 === 0) showStreakFlash('🌟 Streak ×' + streak + '!');
+
+            waste.push({ ...card });
+            tableau[row][col] = null;
+
+            updateScoreBar();
+            render();
+
+            if (countRemaining() === 0) {
+                showBoardFlash('🎉 CLEARED! +' + PTS_WIN_BONUS + ' bonus!');
+                setTimeout(() => { refreshBoard();
+                    render(); }, 1000);
+            }
+        }
+
+        function drawFromDeck() {
+            if (gameOver || !deck.length) return;
+            history.push(snapshot());
+            streak = 0;
+            score = Math.max(0, score + PTS_DRAW_PEN);
+            draws++;
+            const card = deck.pop();
+            waste.push({ ...card });
+            updateScoreBar();
+            render();
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  Stuck check
+        // ════════════════════════════════════════════════════════
+        function isStuck() {
+            if (gameOver || deck.length) return false;
+            for (let r = 0; r < 4; r++)
+                for (let col = 0; col < tableau[r].length; col++) {
+                    const card = tableau[r][col];
+                    if (card && isFree(r, col) && canPlay(card)) return false;
+                }
+            return countRemaining() > 0;
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  End Game – with initials prompt for Top 10
+        // ════════════════════════════════════════════════════════
+        function endGame(reason) {
+            if (gameOver) return;
+            stopTimer();
+            gameOver = true;
+            document.getElementById('game-wrap').className = '';
+
+            // ── SFX.over() ──
+            if (typeof SFX !== 'undefined' && SFX.over) SFX.over();
+
+            const finalScore = score;
+            const isTimer = reason === 'timer';
+            const remaining = countRemaining();
+
+            // Check if this score qualifies for Top 10
+            const hs = loadHS();
+            const qualifies = hs.length < MAX_HS || finalScore > hs[hs.length - 1].score;
+
+            // Build the entry (without initials yet)
+            const entry = {
+                score: finalScore,
+                won: false,
+                streak: bestStreak,
+                time: GAME_TIME - timerSeconds,
+                refreshes: boardRefreshCount,
+                date: new Date().toLocaleDateString(),
+                initials: '---' // placeholder
+            };
+
+            // Store pending entry
+            pendingEntry = entry;
+
+            // Show summary
+            document.getElementById('end-summary').innerHTML = `
+            <div class="item"><span>Final Score</span><strong>${finalScore}</strong></div>
+            <div class="item"><span>Boards Cleared</span><strong>${boardRefreshCount}</strong></div>
+            <div class="item"><span>Best Streak</span><strong>${bestStreak} cards</strong></div>
+            <div class="item"><span>Cards Left</span><strong>${remaining}</strong></div>
+            <div class="item"><span>Draw Penalties</span><strong>${draws} × ${PTS_DRAW_PEN} = ${draws * PTS_DRAW_PEN}</strong></div>
+            <div class="item"><span>Time</span><strong>${Math.floor((GAME_TIME - timerSeconds) / 60)}:${((GAME_TIME - timerSeconds) % 60).toString().padStart(2, '0')}</strong></div>
+            <div class="item total" style="grid-column:1/-1">
+              <span>${qualifies ? '🏆 You made the Top 10!' : 'Score: ' + finalScore}</span>
+              <strong>${finalScore}</strong>
+            </div>
+          `;
+
+            document.getElementById('end-title').textContent =
+                isTimer ? '⏱ Time\'s Up!' : '🚫 No Moves Left';
+            document.getElementById('end-sub').textContent =
+                isTimer ?
+                `${remaining} card${remaining === 1 ? '' : 's'} remained on the board.` :
+                'Deck empty and no valid moves.';
+            document.getElementById('end-new-high').style.display = 'none';
+
+            // Show initials input if qualifies
+            const initSection = document.getElementById('end-initials-section');
+            const initInput = document.getElementById('initials-input');
+            const saveBtn = document.getElementById('btn-save-initials');
+
+            if (qualifies) {
+                initSection.style.display = 'block';
+                initInput.value = '';
+                saveBtn.disabled = false;
+                initInput.focus();
+
+                // Save button handler
+                saveBtn.onclick = function() {
+                    let initials = initInput.value.trim().toUpperCase();
+                    if (!initials) initials = '---';
+                    if (initials.length > 3) initials = initials.slice(0, 3);
+                    if (initials.length < 3) initials = initials.padEnd(3, '-');
+
+                    pendingEntry.initials = initials;
+                    const rank = addHS(pendingEntry);
+                    updateHiDisplay();
+
+                    if (rank === 1) {
+                        document.getElementById('end-new-high').style.display = 'block';
+                    }
+
+                    closeOverlay('end-overlay');
+                    showTop10();
+                };
+
+                // Enter key saves
+                initInput.onkeydown = function(e) {
+                    if (e.key === 'Enter' && !saveBtn.disabled) {
+                        saveBtn.click();
+                    }
+                };
+            } else {
+                initSection.style.display = 'none';
+            }
+
+            document.getElementById('end-overlay').classList.add('show');
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  Render – pure CSS cards (no images)
+        // ════════════════════════════════════════════════════════
+        function createCardElement(card, faceDown, cw, ch, zIndex) {
+            const el = document.createElement('div');
+            el.className = 'card';
+
+            if (faceDown) {
+                el.classList.add('card-back');
+                const d = document.createElement('div');
+                d.className = 'inner-diamond';
+                el.appendChild(d);
+            } else if (!card) {
+                el.classList.add('freeslot');
+            } else {
+                const color = suitColor(card.suit);
+                el.classList.add(color);
+                const sym = suitSymbol(card.suit);
+                const rank = rankDisplay(card.rank);
+
+                const top = document.createElement('div');
+                top.className = 'rank-top';
+                top.innerHTML = rank + '<span class="suit-icon">' + sym + '</span>';
+                el.appendChild(top);
+
+                const bot = document.createElement('div');
+                bot.className = 'rank-bottom';
+                bot.innerHTML = rank + '<span class="suit-icon">' + sym + '</span>';
+                el.appendChild(bot);
+
+                const center = document.createElement('div');
+                center.className = 'suit-center' + (card.rank >= 10 ? ' small' : '');
+                center.textContent = sym;
+                el.appendChild(center);
+            }
+
+            el.style.cssText =
+                `left:0;top:0;width:${cw}px;height:${ch}px;z-index:${zIndex || 10};position:absolute;`;
+            return el;
+        }
+
+        function addLabel(parent, x, y, w, text, color) {
+            const d = document.createElement('div');
+            d.className = 'slot-label';
+            d.style.cssText =
+                `left:${x}px;top:${y}px;width:${w}px;color:${color || '#5faabb'};`;
+            d.textContent = text;
+            parent.appendChild(d);
+        }
+
+        function render() {
+            const area = document.getElementById('game-area');
+            area.innerHTML = '';
+            const { positions, cw, ch, bottomY, aw } = computeLayout();
+            area.style.height = (bottomY + ch + 60) + 'px';
+
+            // ── Tableau ──
+            for (let r = 0; r < 4; r++) {
+                for (let col = 0; col < tableau[r].length; col++) {
+                    const card = tableau[r][col];
+                    if (!card) continue;
+                    const pos = positions[r][col];
+                    const free = isFree(r, col);
+                    const play = free && canPlay(card);
+
+                    const el = createCardElement(card, false, pos.cw, pos.ch, r * 10 + col);
+                    el.style.left = pos.x + 'px';
+                    el.style.top = pos.y + 'px';
+                    if (!free) el.classList.add('dimmed');
+                    if (play) el.classList.add('playable');
+                    if (play) {
+                        el.addEventListener('click', (function(r, col) {
+                            return function() { playTableauCard(r, col); };
+                        })(r, col));
+                    }
+                    area.appendChild(el);
+                }
+            }
+
+            // ── Waste pile (Foundation) ──
+            const wasteX = Math.round(aw / 2) + Math.round(cw * 0.6);
+            const wasteY = bottomY;
+            if (waste.length) {
+                const top = waste[waste.length - 1];
+                const el = createCardElement(top, false, cw, ch, 200);
+                el.style.left = wasteX + 'px';
+                el.style.top = wasteY + 'px';
+                area.appendChild(el);
+                addLabel(area, wasteX, wasteY + ch + 4, cw, 'FOUNDATION');
+            } else {
+                const el = createCardElement(null, false, cw, ch, 200);
+                el.style.left = wasteX + 'px';
+                el.style.top = wasteY + 'px';
+                el.classList.add('freeslot');
+                area.appendChild(el);
+                addLabel(area, wasteX, wasteY + ch + 4, cw, 'FOUNDATION', '#44606a');
+            }
+
+            // ── Draw pile ──
+            const deckX = Math.round(aw / 2) - Math.round(cw * 1.6);
+            const deckY = bottomY;
+            const hasCards = deck.length > 0;
+            const el = createCardElement(null, hasCards, cw, ch, 200);
+            el.style.left = deckX + 'px';
+            el.style.top = deckY + 'px';
+            if (hasCards) {
+                el.classList.add('card-back');
+                const d = document.createElement('div');
+                d.className = 'inner-diamond';
+                el.appendChild(d);
+                if (!gameOver) {
+                    el.style.cursor = 'pointer';
+                    el.addEventListener('click', drawFromDeck);
+                }
+            } else {
+                el.classList.add('freeslot');
+                el.style.cursor = 'default';
+            }
+            area.appendChild(el);
+            addLabel(area, deckX, deckY + ch + 4, cw,
+                hasCards ? 'DRAW (' + deck.length + ')' : 'EMPTY',
+                hasCards ? '#5faabb' : '#44606a');
+
+            // ── Stuck check ──
+            if (isStuck()) {
+                setStatus('No moves left!');
+                setTimeout(() => endGame('stuck'), 700);
+            }
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  Top 10
+        // ════════════════════════════════════════════════════════
+        function showTop10() {
+            document.getElementById('top10-overlay').classList.add('show');
+            renderTop10();
+        }
+
+        function renderTop10() {
+            const hs = loadHS();
+            const el = document.getElementById('top10-list');
+            const rankClass = ['gold', 'silver', 'bronze'];
+            const fmtTime = s => Math.floor(s / 60) + ':' + (s % 60).toString().padStart(2, '0');
+            if (!hs.length) {
+                el.innerHTML = '<div class="top10-empty">No scores yet. Play a game!</div>';
+                return;
+            }
+            el.innerHTML = `<table id="hs-table">
+            <thead><tr><th>#</th><th>Initials</th><th>Score</th><th>Boards</th><th>Streak</th><th>Time</th><th>Date</th></tr></thead>
+            <tbody>` +
+                hs.map((e, i) => `<tr>
+              <td class="rank ${rankClass[i] || ''}">${i + 1}</td>
+              <td class="initials">${e.initials || '---'}</td>
+              <td class="pts">${e.score}</td>
+              <td style="text-align:center">${e.refreshes || 0}</td>
+              <td style="text-align:center">${e.streak || 0}</td>
+              <td>${fmtTime(e.time || 0)}</td>
+              <td>${e.date || '—'}</td>
+            </tr>`).join('') +
+                '</tbody></table>';
+        }
+
+        function closeOverlay(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('show');
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  Events
+        // ════════════════════════════════════════════════════════
+        document.getElementById('btn-new').addEventListener('click', newGame);
+        document.getElementById('btn-undo').addEventListener('click', undoMove);
+        document.getElementById('top10-clear').addEventListener('click', () => {
+            if (confirm('Clear all scores?')) { saveHS([]);
+                renderTop10();
+                updateHiDisplay(); }
+        });
+        document.getElementById('end-play-again').addEventListener('click', () => {
+            pendingEntry = null;
+            newGame();
+        });
+        document.getElementById('top10-play-again').addEventListener('click', () => {
+            closeOverlay('top10-overlay');
+            newGame();
+        });
+
+        window.addEventListener('resize', () => { if (!gameOver) render(); });
+
+        // ── Start ──
+        newGame();
+    </script>
 </body>
 </html>

@@ -228,7 +228,6 @@
             display: grid;
         }
 
-        /* iframe goes in center row – now strictly centered with visual margins */
         .iframe-center {
             grid-column: 1;
             grid-row: 2;
@@ -246,23 +245,24 @@
             border: none;
             display: block;
             background: transparent;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-            border-radius: 4px;
+            box-shadow: none;
+            border-radius: 0;
         }
 
-        /* ─── PHONE ONLY: 35% scale, top horizontal ────────────────────────── */
+        /* ─── PHONE ONLY: 35% scale, top horizontal, NO SCROLL ────────────── */
         @media (max-width: 600px) {
             body {
-                overflow: hidden;
+                overflow: hidden;          /* ← kills the scroll */
                 margin: 0;
                 padding: 0;
-                align-items: flex-start;   /* align to top */
-                justify-content: center;    /* keep horizontal center */
+                height: 100vh;             /* locks to viewport height */
+                align-items: flex-start;   /* arcade stays at top */
+                justify-content: center;   /* horizontally centered */
             }
 
             .arcade-wrapper {
                 transform: scale(0.35);
-                transform-origin: top center; /* top edge stays at top, center horizontally */
+                transform-origin: top center;
             }
         }
     </style>

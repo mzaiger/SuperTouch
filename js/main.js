@@ -36,14 +36,86 @@ $(document).ready(function () {
   // Start timer
   timer('start');
 
+  // --- LEADERBOARD ---
+  var PF_STORAGE_KEY = 'PhotoFind_Top10';
+
+  function pfGetLeaderboard() {
+    return JSON.parse(localStorage.getItem(PF_STORAGE_KEY)) || [];
+  }
+
+  function pfSaveScore(initials, finalScore) {
+    var board = pfGetLeaderboard();
+    board.push({ name: (initials || 'AAA').toUpperCase(), score: finalScore });
+    board.sort(function(a, b) { return b.score - a.score; });
+    board = board.slice(0, 10);
+    localStorage.setItem(PF_STORAGE_KEY, JSON.stringify(board));
+    return board;
+  }
+
+  function pfRenderLeaderboard(tbodyId, board, savedScore) {
+    var tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = '';
+    if (!board.length) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:6px;">NO RECORDS YET</td></tr>';
+      return;
+    }
+    board.forEach(function(row, i) {
+      var tr = document.createElement('tr');
+      var isSaved = (row.name === savedScore.name && row.score === savedScore.score);
+      tr.style.background = isSaved ? 'rgba(255,204,0,0.15)' : (i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.05)');
+      tr.innerHTML = '<td style="padding:6px; text-align:center;' + (isSaved ? 'color:#ffcc00;font-weight:bold;' : '') + '">' + (i+1) + '</td>'
+        + '<td style="padding:6px; text-align:center;' + (isSaved ? 'color:#ffcc00;font-weight:bold;' : '') + '">' + row.name + '</td>'
+        + '<td style="padding:6px; text-align:center;' + (isSaved ? 'color:#ffcc00;font-weight:bold;' : '') + '">' + row.score + '</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Wire up victory modal score save
+  $('#win-save-btn').on('click', function() {
+    var initials = $('#win-initials').val().trim() || 'AAA';
+    var board = pfSaveScore(initials, SCORE);
+    var saved = { name: initials.toUpperCase(), score: SCORE };
+    pfRenderLeaderboard('win-leaderboard-body', board, saved);
+    $('#win-score-entry').hide();
+    $('#win-leaderboard').show();
+  });
+  $('#win-initials').on('keypress', function(e) {
+    if (e.key === 'Enter') $('#win-save-btn').click();
+  });
+
+  // Wire up game-over modal score save
+  $('#lose-save-btn').on('click', function() {
+    var initials = $('#lose-initials').val().trim() || 'AAA';
+    var board = pfSaveScore(initials, SCORE);
+    var saved = { name: initials.toUpperCase(), score: SCORE };
+    pfRenderLeaderboard('lose-leaderboard-body', board, saved);
+    $('#lose-score-entry').hide();
+    $('#lose-leaderboard').show();
+  });
+  $('#lose-initials').on('keypress', function(e) {
+    if (e.key === 'Enter') $('#lose-save-btn').click();
+  });
+
+  // Reset leaderboard panels when modals close / play again
+  function resetLeaderboardPanels() {
+    $('#win-score-entry').show();
+    $('#win-leaderboard').hide();
+    $('#win-initials').val('');
+    $('#lose-score-entry').show();
+    $('#lose-leaderboard').hide();
+    $('#lose-initials').val('');
+  }
+
   // --- RESTART BUTTONS (NEW) ---
   $('#play-again-btn').on('click', function () {
     $('#videoPopUp').modal('hide');
+    resetLeaderboardPanels();
     resetGame();
   });
 
   $('#try-again-btn').on('click', function () {
     $('#gameOverModal').modal('hide');
+    resetLeaderboardPanels();
     resetGame();
   });
 
@@ -279,7 +351,8 @@ $(document).ready(function () {
           GAME_OVER = true;
           document.getElementById('ticking').pause();
           document.getElementById('gameover').play();
-          // NEW: Show game over modal
+          // Show game over modal with score
+          $('#lose-final-score').text(SCORE);
           $('#gameOverModal').modal('show');
         } else if (TIME_LEFT < 20) {
           $('#time-bar').removeClass('progress-bar-warning progress-bar-success');
@@ -470,6 +543,7 @@ $(document).ready(function () {
 
   // Integrates with Bootstrap modal pop up to show Youtube video.
   function playVictoryVideo () {
+    $('#win-final-score').text(SCORE);
     $('#videoPopUp').modal('show');
     var vidUrl = 'https://www.youtube.com/embed/JPBRbIvs5lc?autoplay=1';
     $('#videoPopUp').find('iframe').attr('src', vidUrl);

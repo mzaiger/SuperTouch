@@ -251,7 +251,7 @@
     <div class="arcade-wrapper">
 
         <!-- Main Menu button -->
-        <div id="main-menu-btn" title="Main Menu" onclick="showMenu()">
+        <div id="main-menu-btn" title="Main Menu" onclick="uiClick(); showMenu();">
             <img src="mainmenu.png" alt="Main Menu" />
         </div>
 
@@ -261,25 +261,25 @@
             <span class="game-tile empty empty-top-right"></span>
 
             <!-- 11 Rounds -->
-            <a href="#" class="game-tile pos-t1" title="11 Rounds" onclick="loadGame('11rounds.html'); return false;">
+            <a href="#" class="game-tile pos-t1" title="11 Rounds" onclick="uiClick(); loadGame('11rounds.html'); return false;">
                 <img src="11roundslogo.png" alt="11 Rounds" loading="lazy" />
                 <span class="fallback-label">11 ROUNDS</span>
             </a>
 
             <!-- Tri Pillars -->
-            <a href="#" class="game-tile pos-t2" title="Tri Pillars" onclick="loadGame('tripillars.html'); return false;">
+            <a href="#" class="game-tile pos-t2" title="Tri Pillars" onclick="uiClick(); loadGame('tripillars.html'); return false;">
                 <img src="tripillarslogo.png" alt="Tri Pillars" loading="lazy" />
                 <span class="fallback-label">TRI PILLARS</span>
             </a>
 
             <!-- Squares -->
-            <a href="#" class="game-tile pos-t3" title="Squares" onclick="loadGame('squares.html'); return false;">
+            <a href="#" class="game-tile pos-t3" title="Squares" onclick="uiClick(); loadGame('squares.html'); return false;">
                 <img src="squareslogo.png" alt="Squares" loading="lazy" />
                 <span class="fallback-label">SQUARES</span>
             </a>
 
             <!-- Photo Find -->
-            <a href="#" class="game-tile pos-t4" title="Photo Find" onclick="loadGame('photofind.html'); return false;">
+            <a href="#" class="game-tile pos-t4" title="Photo Find" onclick="uiClick(); loadGame('photofind.html'); return false;">
                 <img src="photofind.png" alt="Photo Find" loading="lazy" />
                 <span class="fallback-label">PHOTO FIND</span>
             </a>
@@ -300,6 +300,15 @@
     </div>
 
     <script>
+        // ─── UI click sound (uses the shared fx/ folder) ───────────────────────
+        var _uiSnd = new Audio('fx/correct-sound.mp3');
+        _uiSnd.volume = 0.6;
+        function uiClick() {
+            _uiSnd.currentTime = 0;
+            _uiSnd.play().catch(function(){});
+        }
+
+        // ─── Game navigation ────────────────────────────────────────────────────
         function loadGame(url) {
             document.getElementById('game-frame').src = url;
             document.getElementById('tile-menu').style.display = 'none';

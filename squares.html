@@ -712,6 +712,9 @@ html {
         setTimeout(() => { resetTable(); markedCount = 0; draw(); }, 900);
         return;
       }
+      
+      draw();
+      return; // <-- FIX: Adding this return prevents the code from continuing to the "Mark new group" logic below immediately after a successful clear.
     }
 
     // Unmark everything

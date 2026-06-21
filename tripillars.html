@@ -910,7 +910,7 @@
             document.getElementById('time-remaining').textContent = m + ':' + String(s).padStart(2, '0');
             document.getElementById('game-wrap').className = pct <= 12 ? 'danger' : '';
 
-            // ── SFX.hurry() when timer enters danger zone (pct <= 20) ──
+            // ── SFX.hurry() when timer turns red (pct <= 20) ──
             if (pct <= 20 && !hurryFired && !gameOver) {
                 hurryFired = true;
                 if (typeof SFX !== 'undefined' && SFX.hurry) SFX.hurry();

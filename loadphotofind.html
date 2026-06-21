@@ -1,174 +1,571 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Spot the difference!</title>
-  <link href="https://fonts.googleapis.com/css?family=Anonymous+Pro" rel="stylesheet">
-  <!-- <link href="https://fonts.googleapis.com/css?family=Questrial" rel="stylesheet"> -->
-  <link href="https://fonts.googleapis.com/css?family=Chango" rel="stylesheet">
-  <!-- <link href="https://fonts.googleapis.com/css?family=Chela+One" rel="stylesheet"> -->
-  <link rel="stylesheet" href="css/bootstrap.min.css" charset="utf-8">
-  <link rel="stylesheet" href="css/font-awesome-4.6.3/css/font-awesome.min.css" charset="utf-8">
-  <link rel="stylesheet" href="css/animate.css" charset="utf-8">
-  <link rel="stylesheet" href="css/style.css" charset="utf-8">
-  <script src="js/external/jquery-3.1.0.min.js"></script>
-  <script src="js/external/bootstrap.min.js"></script>
-  <script src="js/answers.js"></script>
-  <script src="js/main.js"></script>
+    <meta charset="utf-8">
+    <title>Spot the difference!</title>
+    <link href="https://fonts.googleapis.com/css?family=Anonymous+Pro" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Chango" rel="stylesheet">
+    <link rel="stylesheet" href="css/bootstrap.min.css" charset="utf-8">
+    <link rel="stylesheet" href="css/font-awesome-4.6.3/css/font-awesome.min.css" charset="utf-8">
+    <link rel="stylesheet" href="css/animate.css" charset="utf-8">
+    <link rel="stylesheet" href="css/style.css" charset="utf-8">
+    <script src="js/external/jquery-3.1.0.min.js"></script>
+    <script src="js/external/bootstrap.min.js"></script>
+    <script src="js/answers.js"></script>
+    <script src="js/main.js"></script>
 
+    <style>
+        /* ---- distinct score colors ---- */
+        #score-ui {
+            color: #00d4ff !important;
+            /* bright cyan */
+            text-shadow: 0 0 12px rgba(0, 212, 255, 0.5);
+        }
+        #highscore {
+            color: #ffd700 !important;
+            /* gold */
+            text-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+        }
+        .score-label-your {
+            color: #00d4ff;
+        }
+        .score-label-high {
+            color: #ffd700;
+        }
+
+        /* ---- leaderboard table polish ---- */
+        #win-leaderboard table,
+        #lose-leaderboard table {
+            background: #1a1a2e;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #win-leaderboard th,
+        #lose-leaderboard th {
+            background: #0033cc !important;
+            color: #fff !important;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        #win-leaderboard td,
+        #lose-leaderboard td {
+            color: #eee;
+            padding: 6px 8px;
+            border-bottom: 1px solid #333355;
+        }
+        #win-leaderboard tr:hover td,
+        #lose-leaderboard tr:hover td {
+            background: #2a2a4e;
+        }
+        .leaderboard-empty {
+            color: #888;
+            text-align: center;
+            padding: 12px 0;
+            font-style: italic;
+        }
+
+        /* ---- score entry panel tweaks ---- */
+        #win-score-entry input,
+        #lose-score-entry input {
+            background: #111 !important;
+            color: #fff !important;
+            border: 2px solid #44aaff !important;
+            border-radius: 6px !important;
+            padding: 5px !important;
+            width: 80px !important;
+            text-align: center !important;
+            text-transform: uppercase !important;
+            font-size: 1.5em !important;
+        }
+        #win-score-entry input:focus,
+        #lose-score-entry input:focus {
+            outline: none;
+            border-color: #ffd700 !important;
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+        }
+        .btn-save-score {
+            background: #28a745 !important;
+            border: none !important;
+            padding: 6px 18px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+        .btn-save-score:hover {
+            background: #34ce57 !important;
+            transform: scale(1.04);
+            box-shadow: 0 0 16px rgba(52, 206, 87, 0.4);
+        }
+        .btn-save-score:disabled {
+            opacity: 0.5;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* ---- modal body dark theme override ---- */
+        .modal-content {
+            background: #1a1a2e !important;
+            color: #eee !important;
+            border: 1px solid #444477 !important;
+        }
+        .modal-header {
+            border-bottom: 1px solid #333355 !important;
+        }
+        .modal-footer {
+            border-top: 1px solid #333355 !important;
+        }
+        .modal-title {
+            color: #ffd700 !important;
+        }
+        .close {
+            color: #fff !important;
+            opacity: 0.7;
+        }
+        .close:hover {
+            opacity: 1;
+        }
+
+        /* ---- responsive tweaks ---- */
+        @media (max-width: 768px) {
+            #dashboard .col-sm-3,
+            #dashboard .col-sm-6 {
+                text-align: center !important;
+            }
+            #dashboard .col-sm-3.text-right {
+                text-align: center !important;
+            }
+            #dashboard .col-sm-3.text-left {
+                text-align: center !important;
+            }
+        }
+    </style>
 </head>
-<!-- THIS GAME NEEDS TABLET SCREEN SIZE AND ABOVE TO BE FUN -->
-<!-- BOOTSTRAP OPTIMISED FOR 'SM' DEVICES AND ABOVE ONLY! -->
+
 <body style="background: transparent !important;">
 
-  <!-- ============ FANCY UI ACTION AREA ============ -->
+    <!-- ============ FANCY UI ACTION AREA ============ -->
 
-  <!-- Current score | game logo | highscore + Time assist icons -->
-  <div id="dashboard" class="container-fluid text-center restrict-height">
-    <div class="row">
-      <div class="col-sm-3 game-font text-left">
-        <h3 class="game-font">
-          Your score
-        </h3>
-        <div id="score-ui" class="score-ui dark">
-          00000
+    <!-- Current score | game logo | highscore + Time assist icons -->
+    <div id="dashboard" class="container-fluid text-center restrict-height">
+        <div class="row">
+            <div class="col-sm-3 game-font text-left">
+                <h3 class="game-font score-label-your">
+                    Your score
+                </h3>
+                <div id="score-ui" class="score-ui dark">
+                    00000
+                </div>
+            </div>
+            <div id="logo" class="col-sm-6">
+                <a href="https://github.com/nickangtc/spot-the-difference">
+                    <img src="img/logo.png" alt="I'm open source! View code on github" style="width:100%;" />
+                </a>
+            </div>
+            <div class="col-sm-3 text-right">
+                <h3 class="game-font score-label-high">
+                    Highscore
+                </h3>
+                <div id="highscore" class="game-font score-ui">
+                    00000
+                </div>
+                <div id="assist-time">
+                    <img class="icon" src="img/icon-time.png" alt="time icon" />
+                    <img class="icon" src="img/icon-time.png" alt="time icon" />
+                    <img class="icon" src="img/icon-time.png" alt="time icon" />
+                </div>
+            </div>
         </div>
-      </div>
-      <div id="logo" class="col-sm-6">
-        <a href="https://github.com/nickangtc/spot-the-difference">
-          <img src="img/logo.png" alt="I'm open source! View code on github" style="width:100%;" />
-        </a>
-      </div>
-      <div class="col-sm-3 text-right">
-        <h3 class="game-font">
-          Highscore
-        </h3>
-        <div id="highscore" class="game-font score-ui">
-          36550
+
+        <!-- Time countdown bar | Clue assist icons -->
+        <div class="row">
+            <div class="col-sm-10">
+                <div class="progress">
+                    <div id="time-bar" class="progress-bar progress-bar-success progress-bar-striped active" style="width: 100%;" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+            <div class="col-sm-2 text-right">
+                <span id="assist-clue">
+                    <img class="icon" src="img/icon-find.png" alt="clue icon" />
+                    <img class="icon" src="img/icon-find.png" alt="clue icon" />
+                    <img class="icon" src="img/icon-find.png" alt="clue icon" />
+                </span>
+            </div>
         </div>
-        <div id="assist-time">
-          <img class="icon" src="img/icon-time.png" alt="time icon" />
-          <img class="icon" src="img/icon-time.png" alt="time icon" />
-          <img class="icon" src="img/icon-time.png" alt="time icon" />
+
+    </div><!-- /.container-fluid#dashboard -->
+
+    <!-- ============ GAMEPLAY AREA ============ -->
+    <div id="images-area" class="container-fluid text-center restrict-height">
+        <div id="game-stage" class="row">
+            <!-- Left Picture Pane -->
+            <div id="left-pane" class="col-sm-6 tight-fit img1a">
+                <canvas id="canvas-left" width="675" height="527"></canvas>
+            </div>
+
+            <!-- Right Picture Pane -->
+            <div id="right-pane" class="col-sm-6 tight-fit img1b pull-right">
+                <canvas id="canvas-right" width="675" height="527"></canvas>
+            </div>
+
+            <div id="countdown-timer" class="animated infinite pulse game-font"></div>
         </div>
-      </div>
     </div>
 
-    <!-- Time countdown bar | Clue assist icons -->
-    <div class="row">
-      <div class="col-sm-10">
-        <div class="progress">
-          <div id="time-bar" class="progress-bar progress-bar-success progress-bar-striped active" style="width: 100%;" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
+    <!-- ============================================================ -->
+    <!-- WIN MODAL  (Victory)                                          -->
+    <!-- ============================================================ -->
+    <div class="modal fade" id="videoPopUp" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content game-font">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">🎉 Nice job.</h4>
+                </div>
+                <div class="modal-body">
+                    <iframe width="560" height="315" src="" frameborder="0" allowfullscreen></iframe>
+
+                    <!-- Score entry panel -->
+                    <div id="win-score-entry" style="margin-top:15px; text-align:center;">
+                        <p style="font-size:1.2em;">Final Score: <strong id="win-final-score" style="color:#00d4ff;">0</strong></p>
+                        <p>Enter your initials to save your score:</p>
+                        <input type="text" id="win-initials" maxlength="3" placeholder="AAA"
+                        style="font-size:1.5em; width:80px; text-align:center; text-transform:uppercase; border:2px solid #44aaff; border-radius:6px; padding:5px; background:#111; color:#fff;">
+                        <button type="button" class="btn btn-success btn-save-score" id="win-save-btn" style="margin-left:10px;">Save Score</button>
+                        <button type="button" class="btn btn-secondary" id="win-skip-btn" style="margin-left:6px; background:#555; border:none; color:#fff; padding:6px 14px; border-radius:4px;">Skip</button>
+                    </div>
+
+                    <!-- Leaderboard panel (hidden until saved) -->
+                    <div id="win-leaderboard" style="display:none; margin-top:15px;">
+                        <h5 style="text-align:center; color:#ffd700;">🏆 TOP 10 HI-SCORES</h5>
+                        <table style="width:100%; border-collapse:collapse; font-size:0.95em;">
+                            <thead><tr style="background:#0033cc; color:#fff;">
+                                <th style="padding:6px;">#</th>
+                                <th style="padding:6px;">INITIALS</th>
+                                <th style="padding:6px;">SCORE</th>
+                            </tr></thead>
+                            <tbody id="win-leaderboard-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="play-again-btn">Play Again</button>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="col-sm-2 text-right">
-        <span id="assist-clue">
-          <img class="icon" src="img/icon-find.png" alt="clue icon" />
-          <img class="icon" src="img/icon-find.png" alt="clue icon" />
-          <img class="icon" src="img/icon-find.png" alt="clue icon" />
-        </span>
-      </div>
     </div>
 
-  </div><!-- /.container-fluid#dashboard -->
-
-  <!-- ============ GAMEPLAY AREA ============ -->
-  <div id="images-area" class="container-fluid text-center restrict-height">
-    <!-- Area divided into | left-pane | right-pane | -->
-
-    <div id="game-stage" class="row">
-      <!-- Left Picture Pane -->
-      <!-- Do not add to 'left-pane' any class name containing 'img' -->
-      <!-- // it will screw up 'doImg' function in main.js -->
-      <div id="left-pane" class="col-sm-6 tight-fit img1a">
-        <canvas id="canvas-left" width="675" height="527"></canvas>
-      </div>
-
-      <!-- Right Picture Pane -->
-      <div id="right-pane" class="col-sm-6 tight-fit img1b pull-right">
-        <canvas id="canvas-right" width="675" height="527"></canvas>
-      </div>
-
-      <div id="countdown-timer" class="animated infinite pulse game-font"></div>
+    <!-- ============================================================ -->
+    <!-- GAME OVER MODAL                                               -->
+    <!-- ============================================================ -->
+    <div class="modal fade" id="gameOverModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content game-font">
+                <div class="modal-header">
+                    <h4 class="modal-title" style="color:#ff6b6b;">⏰ Time's Up!</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Better luck next time!</p>
+                    <!-- Score entry panel -->
+                    <div id="lose-score-entry" style="text-align:center;">
+                        <p style="font-size:1.2em;">Final Score: <strong id="lose-final-score" style="color:#ff6b6b;">0</strong></p>
+                        <p>Enter your initials to save your score:</p>
+                        <input type="text" id="lose-initials" maxlength="3" placeholder="AAA"
+                        style="font-size:1.5em; width:80px; text-align:center; text-transform:uppercase; border:2px solid #44aaff; border-radius:6px; padding:5px; background:#111; color:#fff;">
+                        <button type="button" class="btn btn-success btn-save-score" id="lose-save-btn" style="margin-left:10px;">Save Score</button>
+                        <button type="button" class="btn btn-secondary" id="lose-skip-btn" style="margin-left:6px; background:#555; border:none; color:#fff; padding:6px 14px; border-radius:4px;">Skip</button>
+                    </div>
+                    <!-- Leaderboard panel (hidden until saved) -->
+                    <div id="lose-leaderboard" style="display:none; margin-top:15px;">
+                        <h5 style="text-align:center; color:#ffd700;">🏆 TOP 10 HI-SCORES</h5>
+                        <table style="width:100%; border-collapse:collapse; font-size:0.95em;">
+                            <thead><tr style="background:#0033cc; color:#fff;">
+                                <th style="padding:6px;">#</th>
+                                <th style="padding:6px;">INITIALS</th>
+                                <th style="padding:6px;">SCORE</th>
+                            </tr></thead>
+                            <tbody id="lose-leaderboard-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="try-again-btn">Try Again</button>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- Bootstrap Modal for victory video -->
-  <div class="modal fade" id="videoPopUp" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content game-font">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="myModalLabel">Nice job.</h4>
-        </div>
-        <div class="modal-body">
-          <iframe width="560" height="315" src="" frameborder="0" allowfullscreen></iframe>
-          <!-- Score entry panel -->
-          <div id="win-score-entry" style="margin-top:15px; text-align:center;">
-            <p style="font-size:1.2em;">Final Score: <strong id="win-final-score">0</strong></p>
-            <p>Enter your initials to save your score:</p>
-            <input type="text" id="win-initials" maxlength="3" placeholder="AAA"
-              style="font-size:1.5em; width:80px; text-align:center; text-transform:uppercase; border:2px solid #44aaff; border-radius:6px; padding:5px; background:#111; color:#fff;">
-            <button type="button" class="btn btn-success" id="win-save-btn" style="margin-left:10px;">Save Score</button>
-          </div>
-          <!-- Leaderboard panel (hidden until saved) -->
-          <div id="win-leaderboard" style="display:none; margin-top:15px;">
-            <h5 style="text-align:center; color:#ffcc00;">TOP 10 HI-SCORES</h5>
-            <table style="width:100%; border-collapse:collapse; font-size:0.95em;">
-              <thead><tr style="background:#0033cc; color:#fff;">
-                <th style="padding:6px;">#</th><th style="padding:6px;">INITIALS</th><th style="padding:6px;">SCORE</th>
-              </tr></thead>
-              <tbody id="win-leaderboard-body"></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-primary" id="play-again-btn">Play Again</button>
-        </div>
-      </div>
-    </div>
-  </div>
+    <!-- ============ AUDIO ============ -->
+    <audio id="right-fx" src="fx/correct-sound.mp3" type="audio/mpeg"></audio>
+    <audio id="wrong-fx" src="fx/wrong-sound.mp3" type="audio/mpeg"></audio>
+    <audio id="time-fx" src="fx/FF7-boost.mp3" type="audio/mpeg"></audio>
+    <audio id="clue-fx" src="fx/FF7-clue.mp3" type="audio/mpeg"></audio>
+    <audio id="ticking" src="fx/ticking-sound.mp3" type="audio/mpeg"></audio>
+    <audio id="gameover" src="fx/FF7-gameover.mp3" type="audio/mpeg"></audio>
 
-  <!-- Game Over Modal -->
-  <div class="modal fade" id="gameOverModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content game-font">
-        <div class="modal-header">
-          <h4 class="modal-title">Time's Up!</h4>
-        </div>
-        <div class="modal-body">
-          <p>Better luck next time!</p>
-          <!-- Score entry panel -->
-          <div id="lose-score-entry" style="text-align:center;">
-            <p style="font-size:1.2em;">Final Score: <strong id="lose-final-score">0</strong></p>
-            <p>Enter your initials to save your score:</p>
-            <input type="text" id="lose-initials" maxlength="3" placeholder="AAA"
-              style="font-size:1.5em; width:80px; text-align:center; text-transform:uppercase; border:2px solid #44aaff; border-radius:6px; padding:5px; background:#111; color:#fff;">
-            <button type="button" class="btn btn-success" id="lose-save-btn" style="margin-left:10px;">Save Score</button>
-          </div>
-          <!-- Leaderboard panel (hidden until saved) -->
-          <div id="lose-leaderboard" style="display:none; margin-top:15px;">
-            <h5 style="text-align:center; color:#ffcc00;">TOP 10 HI-SCORES</h5>
-            <table style="width:100%; border-collapse:collapse; font-size:0.95em;">
-              <thead><tr style="background:#0033cc; color:#fff;">
-                <th style="padding:6px;">#</th><th style="padding:6px;">INITIALS</th><th style="padding:6px;">SCORE</th>
-              </tr></thead>
-              <tbody id="lose-leaderboard-body"></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-primary" id="try-again-btn">Try Again</button>
-        </div>
-      </div>
-    </div>
-  </div>
+    <!-- ============================================================ -->
+    <!-- EMBEDDED JAVASCRIPT  –  Leaderboard & Highscore logic        -->
+    <!-- ============================================================ -->
+    <script>
+        (function() {
+            'use strict';
 
-  <audio id="right-fx" src="fx/correct-sound.mp3" type="audio/mpeg"></audio>
-  <audio id="wrong-fx" src="fx/wrong-sound.mp3" type="audio/mpeg"></audio>
-  <audio id="time-fx" src="fx/FF7-boost.mp3" type="audio/mpeg"></audio>
-  <audio id="clue-fx" src="fx/FF7-clue.mp3" type="audio/mpeg"></audio>
-  <audio id="ticking" src="fx/ticking-sound.mp3" type="audio/mpeg"></audio>
-  <audio id="gameover" src="fx/FF7-gameover.mp3" type="audio/mpeg"></audio>
+            // ---------- storage key ----------
+            var STORAGE_KEY = 'spotTheDiffLeaderboard';
+
+            // ---------- helpers ----------
+            function loadLeaderboard() {
+                try {
+                    var raw = localStorage.getItem(STORAGE_KEY);
+                    if (!raw) return [];
+                    var data = JSON.parse(raw);
+                    return Array.isArray(data) ? data : [];
+                } catch (_) { return []; }
+            }
+
+            function saveLeaderboard(data) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            }
+
+            function getHighscore() {
+                var lb = loadLeaderboard();
+                return lb.length > 0 ? lb[0].score : 0;
+            }
+
+            // format score with leading zeros (5 digits)
+            function formatScore(num) {
+                return String(Math.floor(num)).padStart(5, '0').slice(0, 5);
+            }
+
+            // update the highscore display at top
+            function updateHighscoreDisplay() {
+                var hs = getHighscore();
+                var el = document.getElementById('highscore');
+                if (el) el.textContent = formatScore(hs);
+            }
+
+            // render leaderboard into a tbody
+            function renderLeaderboard(tbodyId) {
+                var tbody = document.getElementById(tbodyId);
+                if (!tbody) return;
+                var lb = loadLeaderboard();
+                var html = '';
+                if (lb.length === 0) {
+                    html = '<tr><td colspan="3" class="leaderboard-empty">No scores yet. Be the first!</td></tr>';
+                } else {
+                    for (var i = 0; i < lb.length; i++) {
+                        var entry = lb[i];
+                        var rank = i + 1;
+                        var medal = '';
+                        if (rank === 1) medal = '🥇 ';
+                        else if (rank === 2) medal = '🥈 ';
+                        else if (rank === 3) medal = '🥉 ';
+                        var initials = (entry.initials || '???').toUpperCase().slice(0, 3);
+                        html += '<tr>' +
+                            '<td style="text-align:center;font-weight:700;">' + medal + rank + '</td>' +
+                            '<td style="text-align:center;font-weight:600;letter-spacing:1px;">' + initials + '</td>' +
+                            '<td style="text-align:center;color:#ffd700;font-weight:700;">' + entry.score + '</td>' +
+                            '</tr>';
+                    }
+                }
+                tbody.innerHTML = html;
+            }
+
+            // add a score to the leaderboard, return updated leaderboard
+            function addScore(initials, score) {
+                if (!initials || initials.trim().length === 0) return null;
+                var clean = initials.trim().toUpperCase().slice(0, 3);
+                if (clean.length === 0) return null;
+                var lb = loadLeaderboard();
+                lb.push({ initials: clean, score: Math.floor(score) });
+                // sort descending by score
+                lb.sort(function(a, b) { return b.score - a.score; });
+                // keep top 10
+                if (lb.length > 10) lb.length = 10;
+                saveLeaderboard(lb);
+                updateHighscoreDisplay();
+                return lb;
+            }
+
+            // ---------- common: show leaderboard in a modal ----------
+            function showLeaderboardInModal(modalId, tbodyId) {
+                var modal = document.getElementById(modalId);
+                if (!modal) return;
+                var panel = modal.querySelector('.modal-body #' + (modalId === 'videoPopUp' ? 'win-leaderboard' :
+                    'lose-leaderboard'));
+                if (panel) {
+                    panel.style.display = 'block';
+                    renderLeaderboard(tbodyId);
+                }
+            }
+
+            // ---------- handle save (win) ----------
+            function handleWinSave() {
+                var input = document.getElementById('win-initials');
+                var scoreEl = document.getElementById('win-final-score');
+                var initials = input ? input.value.trim() : '';
+                var score = scoreEl ? parseInt(scoreEl.textContent, 10) || 0 : 0;
+
+                if (!initials) {
+                    input.focus();
+                    input.style.borderColor = '#ff6b6b';
+                    setTimeout(function() { input.style.borderColor = '#44aaff'; }, 800);
+                    return;
+                }
+                input.style.borderColor = '#44aaff';
+
+                var lb = addScore(initials, score);
+                if (lb) {
+                    // hide entry panel, show leaderboard
+                    document.getElementById('win-score-entry').style.display = 'none';
+                    showLeaderboardInModal('videoPopUp', 'win-leaderboard-body');
+                    // disable save button to prevent double-save
+                    document.getElementById('win-save-btn').disabled = true;
+                }
+            }
+
+            // ---------- handle save (lose) ----------
+            function handleLoseSave() {
+                var input = document.getElementById('lose-initials');
+                var scoreEl = document.getElementById('lose-final-score');
+                var initials = input ? input.value.trim() : '';
+                var score = scoreEl ? parseInt(scoreEl.textContent, 10) || 0 : 0;
+
+                if (!initials) {
+                    input.focus();
+                    input.style.borderColor = '#ff6b6b';
+                    setTimeout(function() { input.style.borderColor = '#44aaff'; }, 800);
+                    return;
+                }
+                input.style.borderColor = '#44aaff';
+
+                var lb = addScore(initials, score);
+                if (lb) {
+                    document.getElementById('lose-score-entry').style.display = 'none';
+                    showLeaderboardInModal('gameOverModal', 'lose-leaderboard-body');
+                    document.getElementById('lose-save-btn').disabled = true;
+                }
+            }
+
+            // ---------- skip (hide entry, show leaderboard anyway) ----------
+            function handleWinSkip() {
+                document.getElementById('win-score-entry').style.display = 'none';
+                showLeaderboardInModal('videoPopUp', 'win-leaderboard-body');
+                document.getElementById('win-save-btn').disabled = true;
+            }
+
+            function handleLoseSkip() {
+                document.getElementById('lose-score-entry').style.display = 'none';
+                showLeaderboardInModal('gameOverModal', 'lose-leaderboard-body');
+                document.getElementById('lose-save-btn').disabled = true;
+            }
+
+            // ---------- reset modals when they re-open ----------
+            function resetModalState(modalId, entryId, tbodyId, saveBtnId) {
+                var modal = document.getElementById(modalId);
+                if (!modal) return;
+                // show entry panel
+                var entryPanel = modal.querySelector('.modal-body #' + entryId);
+                if (entryPanel) entryPanel.style.display = 'block';
+                // hide leaderboard
+                var lbPanel = modal.querySelector('.modal-body #' + (modalId === 'videoPopUp' ? 'win-leaderboard' :
+                    'lose-leaderboard'));
+                if (lbPanel) lbPanel.style.display = 'none';
+                // enable save button
+                var btn = document.getElementById(saveBtnId);
+                if (btn) btn.disabled = false;
+                // clear input
+                var input = modal.querySelector('input[type="text"]');
+                if (input) input.value = '';
+                // clear tbody
+                var tbody = document.getElementById(tbodyId);
+                if (tbody) tbody.innerHTML = '';
+            }
+
+            // ---------- init ----------
+            function init() {
+                // load highscore on page load
+                updateHighscoreDisplay();
+
+                // ----- win modal -----
+                var winSaveBtn = document.getElementById('win-save-btn');
+                if (winSaveBtn) winSaveBtn.addEventListener('click', handleWinSave);
+
+                var winSkipBtn = document.getElementById('win-skip-btn');
+                if (winSkipBtn) winSkipBtn.addEventListener('click', handleWinSkip);
+
+                // when win modal opens, reset state
+                $('#videoPopUp').on('show.bs.modal', function() {
+                    resetModalState('videoPopUp', 'win-score-entry', 'win-leaderboard-body', 'win-save-btn');
+                    // also re-render highscore in case it changed
+                    updateHighscoreDisplay();
+                });
+
+                // ----- lose modal -----
+                var loseSaveBtn = document.getElementById('lose-save-btn');
+                if (loseSaveBtn) loseSaveBtn.addEventListener('click', handleLoseSave);
+
+                var loseSkipBtn = document.getElementById('lose-skip-btn');
+                if (loseSkipBtn) loseSkipBtn.addEventListener('click', handleLoseSkip);
+
+                $('#gameOverModal').on('show.bs.modal', function() {
+                    resetModalState('gameOverModal', 'lose-score-entry', 'lose-leaderboard-body', 'lose-save-btn');
+                    updateHighscoreDisplay();
+                });
+
+                // ----- Play Again / Try Again buttons -----
+                var playAgain = document.getElementById('play-again-btn');
+                if (playAgain) {
+                    playAgain.addEventListener('click', function() {
+                        $('#videoPopUp').modal('hide');
+                        if (typeof window.playAgain === 'function') window.playAgain();
+                    });
+                }
+
+                var tryAgain = document.getElementById('try-again-btn');
+                if (tryAgain) {
+                    tryAgain.addEventListener('click', function() {
+                        $('#gameOverModal').modal('hide');
+                        if (typeof window.tryAgain === 'function') window.tryAgain();
+                    });
+                }
+
+                // ----- Enter key on inputs -----
+                var winInput = document.getElementById('win-initials');
+                if (winInput) {
+                    winInput.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') handleWinSave();
+                    });
+                }
+                var loseInput = document.getElementById('lose-initials');
+                if (loseInput) {
+                    loseInput.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') handleLoseSave();
+                    });
+                }
+
+                // ----- also update highscore periodically (defensive) -----
+                setInterval(updateHighscoreDisplay, 3000);
+
+                console.log('[Leaderboard] Initialized. Highscore:', getHighscore());
+            }
+
+            // run after DOM ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+            // expose to global for main.js to call if needed
+            window.updateHighscoreDisplay = updateHighscoreDisplay;
+            window.getHighscore = getHighscore;
+            window.addScore = addScore;
+            window.renderLeaderboard = renderLeaderboard;
+            window.loadLeaderboard = loadLeaderboard;
+
+        })();
+    </script>
+
 </body>
 </html>

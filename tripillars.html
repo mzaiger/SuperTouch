@@ -178,40 +178,6 @@
             animation: pulse-danger 0.6s ease infinite;
         }
 
-        /* ── controls ── */
-        #controls {
-            width: 100%;
-            max-width: 700px;
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-        .ctrl-btn {
-            flex: 1;
-            font-family: 'Chango', cursive;
-            font-size: 13px;
-            padding: 8px 0;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: transform 0.1s;
-            letter-spacing: 0.5px;
-        }
-        .ctrl-btn:hover {
-            transform: scale(1.03);
-        }
-        .ctrl-btn:active {
-            transform: scale(0.97);
-        }
-        #btn-new {
-            background: #1a3a4a;
-            color: #7fffd4;
-        }
-        #btn-undo {
-            background: #2c5f7a;
-            color: #e0f4ff;
-        }
-
         /* ── status ── */
         #status-bar {
             width: 100%;
@@ -233,6 +199,7 @@
             border-radius: 0;
             box-shadow: none;
             overflow: hidden;
+            position: relative;
         }
         #game-area {
             position: relative;
@@ -639,6 +606,47 @@
             color: #e0f4ff;
         }
 
+        /* ── UNDO BUTTON in game area (small, right of draw stack) ── */
+        #undo-game-btn {
+            position: absolute;
+            font-family: 'Chango', cursive;
+            font-size: 14px;
+            padding: 0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            background: #2c5f7a;
+            color: #e0f4ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            line-height: 1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+        #undo-game-btn:hover:not(:disabled) {
+            transform: scale(1.08);
+            background: #3a7a9a;
+        }
+        #undo-game-btn:active:not(:disabled) {
+            transform: scale(0.94);
+        }
+        #undo-game-btn:disabled {
+            opacity: 0.35;
+            cursor: default;
+            transform: none;
+        }
+        #undo-game-btn .undo-icon {
+            font-size: 18px;
+            line-height: 1;
+            margin-right: 2px;
+        }
+        #undo-game-btn .undo-label {
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+
         /* ── responsive tweaks ── */
         @media (max-width: 500px) {
             #game-title {
@@ -652,10 +660,6 @@
             .dash-label {
                 font-size: 9px;
             }
-            .ctrl-btn {
-                font-size: 11px;
-                padding: 6px 0;
-            }
             .overlay-box {
                 padding: 20px 16px;
             }
@@ -665,6 +669,16 @@
             #end-initials-section .init-row {
                 flex-direction: column;
                 gap: 4px;
+            }
+            #undo-game-btn {
+                font-size: 11px;
+                border-radius: 4px;
+            }
+            #undo-game-btn .undo-icon {
+                font-size: 14px;
+            }
+            #undo-game-btn .undo-label {
+                font-size: 8px;
             }
         }
     </style>
@@ -706,15 +720,14 @@
         </div>
     </div>
 
-    <div id="controls">
-        <button class="ctrl-btn" id="btn-new">⟳ NEW GAME</button>
-        <button class="ctrl-btn" id="btn-undo">↩ UNDO</button>
-    </div>
+    <!-- controls removed: New Game button removed, Undo moved to game area -->
 
     <div id="status-bar">&nbsp;</div>
 
     <div id="game-wrap">
-        <div id="game-area"></div>
+        <div id="game-area">
+            <!-- undo button will be injected here by JS -->
+        </div>
     </div>
 
     <div id="streak-flash"></div>
@@ -796,6 +809,9 @@
         // ── one-shot hurry flag ──
         let hurryFired = false;
 
+        // ── DOM ref for undo button ──
+        let undoBtnEl = null;
+
         // ════════════════════════════════════════════════════════
         //  Card helpers
         // ════════════════════════════════════════════════════════
@@ -854,7 +870,6 @@
             document.getElementById('time-remaining').textContent = m + ':' + String(s).padStart(2, '0');
             document.getElementById('game-wrap').className = pct <= 12 ? 'danger' : '';
 
-            // ── SFX.hurry() when timer enters danger zone (pct <= 20) ──
             if (pct <= 20 && !hurryFired && !gameOver) {
                 hurryFired = true;
                 if (typeof SFX !== 'undefined' && SFX.hurry) SFX.hurry();
@@ -912,7 +927,6 @@
 
             const vstep = Math.round(ch * 0.65);
 
-            // ★ SHIFTED DOWN: topY from 10 → 40 for better vertical centering
             const topY = 0;
             const positions = [];
             for (let r = 0; r < 4; r++) {
@@ -934,7 +948,6 @@
                 }
             }
 
-            // ★ more bottom padding: +25 instead of +10
             const bottomY = topY + 3 * vstep + ch + 25;
             return { positions, cw, ch, bottomY, aw };
         }
@@ -1020,6 +1033,8 @@
             updateScoreBar();
             setStatus('');
             render();
+            // ── SFX.undo() ──
+            if (typeof SFX !== 'undefined' && SFX.undo) SFX.undo();
         }
 
         // ════════════════════════════════════════════════════════
@@ -1032,6 +1047,10 @@
             const sv = document.getElementById('streak-val');
             sv.className = 'score-box' + (streak >= 5 ? ' hot' : '');
             updateHiDisplay();
+            // update undo button state
+            if (undoBtnEl) {
+                undoBtnEl.disabled = history.length === 0 || gameOver;
+            }
         }
 
         function setStatus(msg) {
@@ -1093,6 +1112,7 @@
             setStatus('');
             render();
             startTimer();
+            if (undoBtnEl) undoBtnEl.disabled = true;
         }
 
         // ════════════════════════════════════════════════════════
@@ -1117,6 +1137,7 @@
             updateScoreBar();
             setStatus('');
             render();
+            if (undoBtnEl) undoBtnEl.disabled = true;
         }
 
         // ════════════════════════════════════════════════════════
@@ -1126,7 +1147,6 @@
             if (gameOver) return;
             const card = tableau[row][col];
             if (!card || !isFree(row, col) || !canPlay(card)) {
-                // ── SFX.bad() on invalid click (only if card exists and is free but not playable) ──
                 if (card && isFree(row, col) && !canPlay(card)) {
                     if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
                 }
@@ -1140,7 +1160,6 @@
             const pts = PTS_CARD_BASE + (streak - 1) * PTS_STREAK_MULT;
             score += pts;
 
-            // ── SFX.good() on successful play ──
             if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
 
             if (streak === 3) showStreakFlash('🔥 Streak ×3!');
@@ -1159,6 +1178,7 @@
                 setTimeout(() => { refreshBoard();
                     render(); }, 1000);
             }
+            if (undoBtnEl) undoBtnEl.disabled = history.length === 0 || gameOver;
         }
 
         function drawFromDeck() {
@@ -1171,6 +1191,7 @@
             waste.push({ ...card });
             updateScoreBar();
             render();
+            if (undoBtnEl) undoBtnEl.disabled = history.length === 0 || gameOver;
         }
 
         // ════════════════════════════════════════════════════════
@@ -1194,19 +1215,17 @@
             stopTimer();
             gameOver = true;
             document.getElementById('game-wrap').className = '';
+            if (undoBtnEl) undoBtnEl.disabled = true;
 
-            // ── SFX.over() ──
             if (typeof SFX !== 'undefined' && SFX.over) SFX.over();
 
             const finalScore = score;
             const isTimer = reason === 'timer';
             const remaining = countRemaining();
 
-            // Check if this score qualifies for Top 10
             const hs = loadHS();
             const qualifies = hs.length < MAX_HS || finalScore > hs[hs.length - 1].score;
 
-            // Build the entry (without initials yet)
             const entry = {
                 score: finalScore,
                 won: false,
@@ -1214,13 +1233,11 @@
                 time: GAME_TIME - timerSeconds,
                 refreshes: boardRefreshCount,
                 date: new Date().toLocaleDateString(),
-                initials: '---' // placeholder
+                initials: '---'
             };
 
-            // Store pending entry
             pendingEntry = entry;
 
-            // Show summary
             document.getElementById('end-summary').innerHTML = `
             <div class="item"><span>Final Score</span><strong>${finalScore}</strong></div>
             <div class="item"><span>Boards Cleared</span><strong>${boardRefreshCount}</strong></div>
@@ -1242,7 +1259,6 @@
                 'Deck empty and no valid moves.';
             document.getElementById('end-new-high').style.display = 'none';
 
-            // Show initials input if qualifies
             const initSection = document.getElementById('end-initials-section');
             const initInput = document.getElementById('initials-input');
             const saveBtn = document.getElementById('btn-save-initials');
@@ -1253,7 +1269,6 @@
                 saveBtn.disabled = false;
                 initInput.focus();
 
-                // Save button handler
                 saveBtn.onclick = function() {
                     let initials = initInput.value.trim().toUpperCase();
                     if (!initials) initials = '---';
@@ -1272,7 +1287,6 @@
                     showTop10();
                 };
 
-                // Enter key saves
                 initInput.onkeydown = function(e) {
                     if (e.key === 'Enter' && !saveBtn.disabled) {
                         saveBtn.click();
@@ -1408,6 +1422,29 @@
                 hasCards ? 'DRAW (' + deck.length + ')' : 'EMPTY',
                 hasCards ? '#5faabb' : '#44606a');
 
+            // ── UNDO BUTTON: right of the draw stack, smaller ──
+            const undoX = deckX + cw + 10;
+            const undoW = Math.max(34, Math.round(cw * 0.28));
+            const undoH = Math.round(ch * 0.55);
+
+            if (!undoBtnEl) {
+                undoBtnEl = document.createElement('button');
+                undoBtnEl.id = 'undo-game-btn';
+                undoBtnEl.innerHTML = '<span class="undo-icon">↩</span><span class="undo-label">UNDO</span>';
+                undoBtnEl.title = 'Undo last move';
+                undoBtnEl.addEventListener('click', undoMove);
+                area.appendChild(undoBtnEl);
+            } else {
+                area.appendChild(undoBtnEl);
+            }
+
+            undoBtnEl.style.left = undoX + 'px';
+            undoBtnEl.style.top = (deckY + (ch - undoH) / 2) + 'px';
+            undoBtnEl.style.width = undoW + 'px';
+            undoBtnEl.style.height = undoH + 'px';
+            undoBtnEl.style.fontSize = Math.max(10, Math.round(undoH * 0.3)) + 'px';
+            undoBtnEl.disabled = history.length === 0 || gameOver;
+
             // ── Stuck check ──
             if (isStuck()) {
                 setStatus('No moves left!');
@@ -1455,13 +1492,7 @@
         // ════════════════════════════════════════════════════════
         //  Events
         // ════════════════════════════════════════════════════════
-        document.getElementById('btn-new').addEventListener('click', newGame);
-        document.getElementById('btn-undo').addEventListener('click', undoMove);
-        document.getElementById('top10-clear').addEventListener('click', () => {
-            if (confirm('Clear all scores?')) { saveHS([]);
-                renderTop10();
-                updateHiDisplay(); }
-        });
+        // New Game button removed — use overlay "Play Again" or refresh
         document.getElementById('end-play-again').addEventListener('click', () => {
             pendingEntry = null;
             newGame();
@@ -1469,6 +1500,11 @@
         document.getElementById('top10-play-again').addEventListener('click', () => {
             closeOverlay('top10-overlay');
             newGame();
+        });
+        document.getElementById('top10-clear').addEventListener('click', () => {
+            if (confirm('Clear all scores?')) { saveHS([]);
+                renderTop10();
+                updateHiDisplay(); }
         });
 
         window.addEventListener('resize', () => { if (!gameOver) render(); });

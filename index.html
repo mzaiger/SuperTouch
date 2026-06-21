@@ -244,6 +244,23 @@
             display: block;
             zoom: 1.15;
         }
+
+        /* ─── PHONE ONLY: 50% resolution ─────────────────────────────────────── */
+        @media (max-width: 600px) {
+            body {
+                overflow: hidden;
+                width: 100vw;
+                height: 100vh;
+                margin: 0;
+                padding: 0;
+            }
+
+            .arcade-wrapper {
+                transform: scale(0.5);
+                transform-origin: center center;
+                /* keep original dimensions; scale handles visual size */
+            }
+        }
     </style>
 </head>
 <body>
@@ -303,9 +320,10 @@
         // ─── UI click sound (uses the shared fx/ folder) ───────────────────────
         var _uiSnd = new Audio('fx/correct-sound.mp3');
         _uiSnd.volume = 0.6;
+
         function uiClick() {
             _uiSnd.currentTime = 0;
-            _uiSnd.play().catch(function(){});
+            _uiSnd.play().catch(function() {});
         }
 
         // ─── Game navigation ────────────────────────────────────────────────────

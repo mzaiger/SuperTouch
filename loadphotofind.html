@@ -103,17 +103,33 @@
         </div>
         <div class="modal-body">
           <iframe width="560" height="315" src="" frameborder="0" allowfullscreen></iframe>
+          <!-- Score entry panel -->
+          <div id="win-score-entry" style="margin-top:15px; text-align:center;">
+            <p style="font-size:1.2em;">Final Score: <strong id="win-final-score">0</strong></p>
+            <p>Enter your initials to save your score:</p>
+            <input type="text" id="win-initials" maxlength="3" placeholder="AAA"
+              style="font-size:1.5em; width:80px; text-align:center; text-transform:uppercase; border:2px solid #44aaff; border-radius:6px; padding:5px; background:#111; color:#fff;">
+            <button type="button" class="btn btn-success" id="win-save-btn" style="margin-left:10px;">Save Score</button>
+          </div>
+          <!-- Leaderboard panel (hidden until saved) -->
+          <div id="win-leaderboard" style="display:none; margin-top:15px;">
+            <h5 style="text-align:center; color:#ffcc00;">TOP 10 HI-SCORES</h5>
+            <table style="width:100%; border-collapse:collapse; font-size:0.95em;">
+              <thead><tr style="background:#0033cc; color:#fff;">
+                <th style="padding:6px;">#</th><th style="padding:6px;">INITIALS</th><th style="padding:6px;">SCORE</th>
+              </tr></thead>
+              <tbody id="win-leaderboard-body"></tbody>
+            </table>
+          </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <!-- NEW: Play Again button -->
           <button type="button" class="btn btn-primary" id="play-again-btn">Play Again</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- NEW: Game Over Modal -->
+  <!-- Game Over Modal -->
   <div class="modal fade" id="gameOverModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
       <div class="modal-content game-font">
@@ -122,6 +138,24 @@
         </div>
         <div class="modal-body">
           <p>Better luck next time!</p>
+          <!-- Score entry panel -->
+          <div id="lose-score-entry" style="text-align:center;">
+            <p style="font-size:1.2em;">Final Score: <strong id="lose-final-score">0</strong></p>
+            <p>Enter your initials to save your score:</p>
+            <input type="text" id="lose-initials" maxlength="3" placeholder="AAA"
+              style="font-size:1.5em; width:80px; text-align:center; text-transform:uppercase; border:2px solid #44aaff; border-radius:6px; padding:5px; background:#111; color:#fff;">
+            <button type="button" class="btn btn-success" id="lose-save-btn" style="margin-left:10px;">Save Score</button>
+          </div>
+          <!-- Leaderboard panel (hidden until saved) -->
+          <div id="lose-leaderboard" style="display:none; margin-top:15px;">
+            <h5 style="text-align:center; color:#ffcc00;">TOP 10 HI-SCORES</h5>
+            <table style="width:100%; border-collapse:collapse; font-size:0.95em;">
+              <thead><tr style="background:#0033cc; color:#fff;">
+                <th style="padding:6px;">#</th><th style="padding:6px;">INITIALS</th><th style="padding:6px;">SCORE</th>
+              </tr></thead>
+              <tbody id="lose-leaderboard-body"></tbody>
+            </table>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-primary" id="try-again-btn">Try Again</button>

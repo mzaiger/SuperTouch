@@ -1,174 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Spot the difference!</title>
-  <link href="https://fonts.googleapis.com/css?family=Anonymous+Pro" rel="stylesheet">
-  <!-- <link href="https://fonts.googleapis.com/css?family=Questrial" rel="stylesheet"> -->
-  <link href="https://fonts.googleapis.com/css?family=Chango" rel="stylesheet">
-  <!-- <link href="https://fonts.googleapis.com/css?family=Chela+One" rel="stylesheet"> -->
-  <link rel="stylesheet" href="css/bootstrap.min.css" charset="utf-8">
-  <link rel="stylesheet" href="css/font-awesome-4.6.3/css/font-awesome.min.css" charset="utf-8">
-  <link rel="stylesheet" href="css/animate.css" charset="utf-8">
-  <link rel="stylesheet" href="css/style.css" charset="utf-8">
-  <script src="js/external/jquery-3.1.0.min.js"></script>
-  <script src="js/external/bootstrap.min.js"></script>
-  <script src="js/answers.js"></script>
-  <script src="js/main.js"></script>
-
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Find</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html {
+            transform: scale(1.2);
+            transform-origin: top center;
+        }
+        body {
+            overflow: hidden;               /* no scrollbars */
+            background: transparent;
+            height: 100vh;
+            width: 100vw;
+        }
+        iframe {
+            position: fixed;
+            top: 10px;
+            left: 50%;                     /* horizontal center */
+            display: block;
+            /* fixed size: must be (visual_width / zoom) */
+            /* visual width = 1040px (twice 520), visual height = 520px (twice 260) */
+            /* zoom 33% → scale(0.33) → actual size = 1040/0.33 = 3152px, 520/0.33 = 1576px */
+            width: 1452px;
+            height: 1176px;
+            border: none;
+            transform: translateX(-50%) scale(0.45);
+            transform-origin: top center;  /* keep top aligned, center horizontally */
+            overflow: hidden;              /* safety */
+        }
+    </style>
 </head>
-<!-- THIS GAME NEEDS TABLET SCREEN SIZE AND ABOVE TO BE FUN -->
-<!-- BOOTSTRAP OPTIMISED FOR 'SM' DEVICES AND ABOVE ONLY! -->
-<body style="background: transparent !important;">
-
-  <!-- ============ FANCY UI ACTION AREA ============ -->
-
-  <!-- Current score | game logo | highscore + Time assist icons -->
-  <div id="dashboard" class="container-fluid text-center restrict-height">
-    <div class="row">
-      <div class="col-sm-3 game-font text-left">
-        <h3 class="game-font" style="color: #00ccff;">
-          Your score
-        </h3>
-        <div id="score-ui" class="score-ui dark" style="color: #00ccff;">
-          00000
-        </div>
-      </div>
-      <div id="logo" class="col-sm-6">
-        <a href="https://github.com/nickangtc/spot-the-difference">
-          <img src="img/logo.png" alt="I'm open source! View code on github" style="width:100%;" />
-        </a>
-      </div>
-      <div class="col-sm-3 text-right">
-        <h3 class="game-font" style="color: #ffcc00;">
-          Highscore
-        </h3>
-        <div id="highscore" class="game-font score-ui" style="color: #ffcc00;">
-          0
-        </div>
-        <div id="assist-time">
-          <img class="icon" src="img/icon-time.png" alt="time icon" />
-          <img class="icon" src="img/icon-time.png" alt="time icon" />
-          <img class="icon" src="img/icon-time.png" alt="time icon" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Time countdown bar | Clue assist icons -->
-    <div class="row">
-      <div class="col-sm-10">
-        <div class="progress">
-          <div id="time-bar" class="progress-bar progress-bar-success progress-bar-striped active" style="width: 100%;" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
-        </div>
-      </div>
-      <div class="col-sm-2 text-right">
-        <span id="assist-clue">
-          <img class="icon" src="img/icon-find.png" alt="clue icon" />
-          <img class="icon" src="img/icon-find.png" alt="clue icon" />
-          <img class="icon" src="img/icon-find.png" alt="clue icon" />
-        </span>
-      </div>
-    </div>
-
-  </div><!-- /.container-fluid#dashboard -->
-
-  <!-- ============ GAMEPLAY AREA ============ -->
-  <div id="images-area" class="container-fluid text-center restrict-height">
-    <!-- Area divided into | left-pane | right-pane | -->
-
-    <div id="game-stage" class="row">
-      <!-- Left Picture Pane -->
-      <!-- Do not add to 'left-pane' any class name containing 'img' -->
-      <!-- // it will screw up 'doImg' function in main.js -->
-      <div id="left-pane" class="col-sm-6 tight-fit img1a">
-        <canvas id="canvas-left" width="675" height="527"></canvas>
-      </div>
-
-      <!-- Right Picture Pane -->
-      <div id="right-pane" class="col-sm-6 tight-fit img1b pull-right">
-        <canvas id="canvas-right" width="675" height="527"></canvas>
-      </div>
-
-      <div id="countdown-timer" class="animated infinite pulse game-font"></div>
-    </div>
-  </div>
-
-  <!-- Bootstrap Modal for victory video -->
-  <div class="modal fade" id="videoPopUp" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content game-font">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="myModalLabel">Nice job.</h4>
-        </div>
-        <div class="modal-body">
-          <iframe width="560" height="315" src="" frameborder="0" allowfullscreen></iframe>
-          <!-- Score entry panel -->
-          <div id="win-score-entry" style="margin-top:15px; text-align:center;">
-            <p style="font-size:1.2em;">Final Score: <strong id="win-final-score">0</strong></p>
-            <p>Enter your initials to save your score:</p>
-            <input type="text" id="win-initials" maxlength="3" placeholder="AAA"
-              style="font-size:1.5em; width:80px; text-align:center; text-transform:uppercase; border:2px solid #44aaff; border-radius:6px; padding:5px; background:#111; color:#fff;">
-            <button type="button" class="btn btn-success" id="win-save-btn" style="margin-left:10px;">Save Score</button>
-          </div>
-          <!-- Leaderboard panel (hidden until saved) -->
-          <div id="win-leaderboard" style="display:none; margin-top:15px;">
-            <h5 style="text-align:center; color:#ffcc00;">TOP 10 HI-SCORES</h5>
-            <table style="width:100%; border-collapse:collapse; font-size:0.95em;">
-              <thead><tr style="background:#0033cc; color:#fff;">
-                <th style="padding:6px;">#</th><th style="padding:6px;">INITIALS</th><th style="padding:6px;">SCORE</th>
-              </tr></thead>
-              <tbody id="win-leaderboard-body"></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-primary" id="play-again-btn">Play Again</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Game Over Modal -->
-  <div class="modal fade" id="gameOverModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content game-font">
-        <div class="modal-header">
-          <h4 class="modal-title">Time's Up!</h4>
-        </div>
-        <div class="modal-body">
-          <p>Better luck next time!</p>
-          <!-- Score entry panel -->
-          <div id="lose-score-entry" style="text-align:center;">
-            <p style="font-size:1.2em;">Final Score: <strong id="lose-final-score">0</strong></p>
-            <p>Enter your initials to save your score:</p>
-            <input type="text" id="lose-initials" maxlength="3" placeholder="AAA"
-              style="font-size:1.5em; width:80px; text-align:center; text-transform:uppercase; border:2px solid #44aaff; border-radius:6px; padding:5px; background:#111; color:#fff;">
-            <button type="button" class="btn btn-success" id="lose-save-btn" style="margin-left:10px;">Save Score</button>
-          </div>
-          <!-- Leaderboard panel (hidden until saved) -->
-          <div id="lose-leaderboard" style="display:none; margin-top:15px;">
-            <h5 style="text-align:center; color:#ffcc00;">TOP 10 HI-SCORES</h5>
-            <table style="width:100%; border-collapse:collapse; font-size:0.95em;">
-              <thead><tr style="background:#0033cc; color:#fff;">
-                <th style="padding:6px;">#</th><th style="padding:6px;">INITIALS</th><th style="padding:6px;">SCORE</th>
-              </tr></thead>
-              <tbody id="lose-leaderboard-body"></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-primary" id="try-again-btn">Try Again</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <audio id="right-fx" src="fx/correct-sound.mp3" type="audio/mpeg"></audio>
-  <audio id="wrong-fx" src="fx/wrong-sound.mp3" type="audio/mpeg"></audio>
-  <audio id="time-fx" src="fx/FF7-boost.mp3" type="audio/mpeg"></audio>
-  <audio id="clue-fx" src="fx/FF7-clue.mp3" type="audio/mpeg"></audio>
-  <audio id="ticking" src="fx/ticking-sound.mp3" type="audio/mpeg"></audio>
-  <audio id="gameover" src="fx/FF7-gameover.mp3" type="audio/mpeg"></audio>
+<br/>
+<body>
+    <iframe src="loadphotofind.html" scrolling="no"></iframe>
 </body>
 </html>

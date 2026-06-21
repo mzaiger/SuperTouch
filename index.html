@@ -228,7 +228,7 @@
             display: grid;
         }
 
-        /* iframe goes in center row */
+        /* iframe goes in center row – now strictly centered with visual margins */
         .iframe-center {
             grid-column: 1;
             grid-row: 2;
@@ -236,16 +236,21 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-        }
-        .iframe-center iframe {
             width: 100%;
             height: 100%;
-            border: none;
-            display: block;
-            zoom: 1.15;
         }
 
-        /* ─── PHONE ONLY: 33% scale, top horizontal ────────────────────────── */
+        .iframe-center iframe {
+            width: 92%;
+            height: 88%;
+            border: none;
+            display: block;
+            background: transparent;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            border-radius: 4px;
+        }
+
+        /* ─── PHONE ONLY: 35% scale, top horizontal ────────────────────────── */
         @media (max-width: 600px) {
             body {
                 overflow: hidden;
@@ -256,7 +261,7 @@
             }
 
             .arcade-wrapper {
-                transform: scale(0.33);
+                transform: scale(0.35);
                 transform-origin: top center; /* top edge stays at top, center horizontally */
             }
         }
@@ -308,7 +313,7 @@
         <div class="iframe-grid" id="iframe-panel">
             <div></div>
             <div class="iframe-center">
-                <iframe id="game-frame" src="" scrolling="no" allowtransparency="true" style="background: transparent;"></iframe>
+                <iframe id="game-frame" src="" scrolling="no" allowtransparency="true"></iframe>
             </div>
             <div></div>
         </div>

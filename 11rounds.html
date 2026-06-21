@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>11 Rounds Puzzle - Classic Arcade</title>
+    <script src="sfx.js"></script>
     <style>
         :root {
             --wood: #3a2311;
@@ -628,6 +629,9 @@ html {
 
         // --- Match & Bust ---
         function processMatch() {
+            // ── SFX.good() on match ──
+            if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
+
             document.body.style.pointerEvents = 'none';
             setTimeout(() => {
                 selectedBalls.forEach(b => {
@@ -650,6 +654,9 @@ html {
         }
 
         function processBust() {
+            // ── SFX.bad() on bust ──
+            if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
+
             document.body.style.pointerEvents = 'none';
             selectedBalls.forEach(b => b.element.classList.add('error'));
             setTimeout(() => {
@@ -704,6 +711,9 @@ html {
         }
 
         function endGame(message) {
+            // ── SFX.over() ──
+            if (typeof SFX !== 'undefined' && SFX.over) SFX.over();
+
             document.getElementById('end-title').innerText = message;
             document.getElementById('final-score').innerText = score;
             setTimeout(() => {

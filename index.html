@@ -1,350 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SuperTouch · Classic Arcade</title>
-    <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SuperTouch · Classic Arcade</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            width: 100%;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #010008;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+  body {
+    background: #010008;
+    font-family: 'Arial', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
 
-        .arcade-wrapper {
-            position: relative;
-            width: 900px;
-            height: 950px;
-            background-image: url('background.png');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-color: #1a2f3e;
-            overflow: hidden;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+  /* ── WALLET HUD ── */
+  .wallet-hud {
+    width: 100%;
+    background: #05050f;
+    border-bottom: 2px solid #7fffd4;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    gap: 12px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.6);
+    position: sticky;
+    top: 0;
+    z-index: 200;
+  }
+  .hud-balance {
+    font-family: 'Arial Black', Arial, sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    color: #ffd700;
+    text-shadow: 0 0 8px #ffd70066;
+    letter-spacing: 1px;
+  }
+  .hud-balance .hud-label {
+    font-size: 9px;
+    color: #224433;
+    letter-spacing: 2px;
+    font-weight: normal;
+    display: block;
+    margin-bottom: 1px;
+  }
+  .hud-free {
+    font-family: 'Arial Black', Arial, sans-serif;
+    font-size: 10px;
+    font-weight: 900;
+    color: #7fffd4;
+    letter-spacing: 3px;
+  }
+  .hud-btn {
+    font-family: 'Arial Black', Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 2px solid;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.15s, filter 0.15s;
+    background: none;
+  }
+  .hud-btn:hover { transform: scale(1.06); filter: brightness(1.15); }
+  .btn-wallet { background: #0a0a1a; border-color: #ffd700; color: #ffd700; }
 
-        /* scanline overlay */
-        .arcade-wrapper::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            background: repeating-linear-gradient(0deg,
-                    transparent,
-                    transparent 2px,
-                    rgba(0, 0, 0, 0.04) 2px,
-                    rgba(0, 0, 0, 0.04) 4px);
-            opacity: 0.25;
-            mix-blend-mode: overlay;
-            z-index: 5;
-        }
-
-        /* ─── Main Menu button ─── */
-        #main-menu-btn {
-            position: absolute;
-            top: 18px;
-            right: 18px;
-            z-index: 20;
-            cursor: pointer;
-            display: none;
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
-            user-select: none;
-            -webkit-user-drag: none;
-        }
-        #main-menu-btn img {
-            height: 48px;
-            width: auto;
-            display: block;
-            filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.6));
-        }
-        #main-menu-btn:hover {
-            transform: scale(1.18);
-            filter: brightness(1.15) drop-shadow(0 6px 18px rgba(127, 255, 212, 0.35));
-        }
-        #main-menu-btn:active {
-            transform: scale(0.94);
-            transition-duration: 0.08s;
-        }
-
-        /* ─── 2×4 tile menu grid ─── */
-        .game-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr 1fr 1fr;
-            width: 85%;
-            height: 70%;
-            gap: 4% 6%;
-            align-items: center;
-            justify-items: center;
-            z-index: 2;
-            position: relative;
-        }
-
-        .game-tile {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease;
-            cursor: pointer;
-            border-radius: 8px;
-            position: relative;
-            text-decoration: none;
-            background: transparent;
-            padding: 0;
-        }
-        .game-tile:hover {
-            transform: scale(1.10);
-            filter: brightness(1.10) drop-shadow(0 8px 30px rgba(127, 255, 212, 0.20));
-            z-index: 10;
-        }
-        .game-tile:active {
-            transform: scale(0.94);
-            transition-duration: 0.08s;
-        }
-        .game-tile img {
-            width: auto;
-            height: auto;
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            display: block;
-            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
-            transition: filter 0.25s ease;
-            border-radius: 4px;
-            user-select: none;
-            -webkit-user-drag: none;
-            background: linear-gradient(90deg, #1a2f3e 25%, #2a4a5e 50%, #1a2f3e 75%);
-            background-size: 200% 100%;
-            animation: shimmer 2s ease-in-out infinite;
-        }
-        .game-tile img[src] {
-            animation: none;
-            background: transparent;
-        }
-        .game-tile:hover img {
-            filter: drop-shadow(0 8px 28px rgba(0, 0, 0, 0.6));
-        }
-        .game-tile.empty {
-            cursor: default;
-            pointer-events: none;
-            background: transparent !important;
-            box-shadow: none !important;
-            transform: none !important;
-            filter: none !important;
-        }
-        .game-tile.empty img,
-        .game-tile.empty .fallback-label {
-            display: none;
-        }
-        .game-tile .fallback-label {
-            display: none;
-            color: #7fffd4;
-            font-size: clamp(14px, 2.8vw, 32px);
-            text-align: center;
-            letter-spacing: 1px;
-            line-height: 1.2;
-            padding: 0 6%;
-        }
-        .game-tile img:not([src])+.fallback-label,
-        .game-tile img[src=""]+.fallback-label {
-            display: block;
-        }
-        .game-tile img:not([src]),
-        .game-tile img[src=""] {
-            display: none;
-        }
-
-        @keyframes shimmer {
-            0% {
-                background-position: -200% center;
-            }
-            100% {
-                background-position: 200% center;
-            }
-        }
-
-        .game-tile.pos-t1 {
-            grid-column: 1;
-            grid-row: 2;
-        }
-        .game-tile.pos-t2 {
-            grid-column: 2;
-            grid-row: 2;
-        }
-        .game-tile.pos-t3 {
-            grid-column: 1;
-            grid-row: 3;
-        }
-        .game-tile.pos-t4 {
-            grid-column: 2;
-            grid-row: 3;
-        }
-        .game-tile.empty-top-left {
-            grid-column: 1;
-            grid-row: 1;
-        }
-        .game-tile.empty-top-right {
-            grid-column: 2;
-            grid-row: 1;
-        }
-        .game-tile.empty-bottom-left {
-            grid-column: 1;
-            grid-row: 4;
-        }
-        .game-tile.empty-bottom-right {
-            grid-column: 2;
-            grid-row: 4;
-        }
-
-        /* ─── 1×3 iframe grid ─── */
-        .iframe-grid {
-            display: none;
-            width: 100%;
-            height: 100%;
-            position: relative;
-            z-index: 2;
-            grid-template-columns: 1fr;
-            grid-template-rows: 3.3fr 10fr 1fr;
-        }
-        .iframe-grid.active {
-            display: grid;
-        }
-
-        .iframe-center {
-            grid-column: 1;
-            grid-row: 2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-        }
-
-        .iframe-center iframe {
-            width: 92%;
-            height: 88%;
-            border: none;
-            display: block;
-            background: transparent;
-            box-shadow: none;
-            border-radius: 0;
-        }
-
-        /* ─── PHONE ONLY: 35% scale, top horizontal, NO SCROLL ────────────── */
-        @media (max-width: 600px) {
-            body {
-                overflow: hidden;          /* ← kills the scroll */
-                margin: 0;
-                padding: 0;
-                height: 100vh;             /* locks to viewport height */
-                align-items: center;   /* arcade stays at top */
-                justify-content: center;   /* horizontally centered */
-            }
-
-            .arcade-wrapper {
-                transform: scale(0.35);
-                transform-origin: center;
-            }
-        }
-    </style>
+  /* ── GAME IFRAME ── */
+  .game-wrap {
+    width: 100%;
+    flex: 1;
+  }
+  .game-wrap iframe {
+    width: 100%;
+    height: calc(100vh - 56px);
+    border: none;
+    display: block;
+    background: #010008;
+  }
+</style>
 </head>
 <body>
 
-    <div class="arcade-wrapper">
+<!-- WALLET HUD -->
+<div class="wallet-hud">
+  <div class="hud-balance">
+    <span class="hud-label">WALLET</span>
+    $<span id="hudAmt">0</span>.00
+  </div>
+  <div class="hud-free">✅ FREE PLAY</div>
+  <a class="hud-btn btn-wallet" href="../wallet.html">← WALLET</a>
+</div>
 
-        <!-- Main Menu button -->
-        <div id="main-menu-btn" title="Main Menu" onclick="uiClick(); showMenu();">
-            <img src="mainmenu.png" alt="Main Menu" />
-        </div>
+<!-- THE GAME -->
+<div class="game-wrap">
+  <iframe id="arcadeFrame" src="SuperTouch/index.html" title="SuperTouch Arcade" allowtransparency="true"></iframe>
+</div>
 
-        <!-- TILE MENU -->
-        <div class="game-grid" id="tile-menu">
-            <span class="game-tile empty empty-top-left"></span>
-            <span class="game-tile empty empty-top-right"></span>
-
-            <!-- 11 Rounds -->
-            <a href="#" class="game-tile pos-t1" title="11 Rounds" onclick="uiClick(); loadGame('11rounds.html'); return false;">
-                <img src="11roundslogo.png" alt="11 Rounds" loading="lazy" />
-                <span class="fallback-label">11 ROUNDS</span>
-            </a>
-
-            <!-- Tri Pillars -->
-            <a href="#" class="game-tile pos-t2" title="Tri Pillars" onclick="uiClick(); loadGame('tripillars.html'); return false;">
-                <img src="tripillarslogo.png" alt="Tri Pillars" loading="lazy" />
-                <span class="fallback-label">TRI PILLARS</span>
-            </a>
-
-            <!-- Squares -->
-            <a href="#" class="game-tile pos-t3" title="Squares" onclick="uiClick(); loadGame('squares.html'); return false;">
-                <img src="squareslogo.png" alt="Squares" loading="lazy" />
-                <span class="fallback-label">SQUARES</span>
-            </a>
-
-            <!-- Photo Find -->
-            <a href="#" class="game-tile pos-t4" title="Photo Find" onclick="uiClick(); loadGame('photofind.html'); return false;">
-                <img src="photofind.png" alt="Photo Find" loading="lazy" />
-                <span class="fallback-label">PHOTO FIND</span>
-            </a>
-
-            <span class="game-tile empty empty-bottom-left"></span>
-            <span class="game-tile empty empty-bottom-right"></span>
-        </div>
-
-        <!-- 1×3 IFRAME GRID — top empty / iframe / bottom empty -->
-        <div class="iframe-grid" id="iframe-panel">
-            <div></div>
-            <div class="iframe-center">
-                <iframe id="game-frame" src="" scrolling="no" allowtransparency="true"></iframe>
-            </div>
-            <div></div>
-        </div>
-
-    </div>
-
-    <script>
-        // ─── UI click sound (uses the shared fx/ folder) ───────────────────────
-        var _uiSnd = new Audio('fx/correct-sound.mp3');
-        _uiSnd.volume = 0.6;
-
-        function uiClick() {
-            _uiSnd.currentTime = 0;
-            _uiSnd.play().catch(function() {});
-        }
-
-        // ─── Game navigation ────────────────────────────────────────────────────
-        function loadGame(url) {
-            document.getElementById('game-frame').src = url;
-            document.getElementById('tile-menu').style.display = 'none';
-            document.getElementById('iframe-panel').classList.add('active');
-            document.getElementById('main-menu-btn').style.display = 'block';
-        }
-
-        function showMenu() {
-            document.getElementById('game-frame').src = '';
-            document.getElementById('iframe-panel').classList.remove('active');
-            document.getElementById('tile-menu').style.display = '';
-            document.getElementById('main-menu-btn').style.display = 'none';
-        }
-    </script>
-
+<script>
+const WALLET_KEY = 'arcade_wallet';
+function getBalance() {
+  const v = localStorage.getItem(WALLET_KEY);
+  if (v === null) { localStorage.setItem(WALLET_KEY, '20'); return 20; }
+  return parseFloat(v) || 0;
+}
+document.getElementById('hudAmt').textContent = getBalance().toFixed(0);
+// Keep HUD fresh if storage changes elsewhere
+window.addEventListener('storage', function(e) {
+  if (e.key === WALLET_KEY) {
+    document.getElementById('hudAmt').textContent = (parseFloat(e.newValue) || 0).toFixed(0);
+  }
+});
+</script>
 </body>
 </html>

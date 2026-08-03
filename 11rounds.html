@@ -399,54 +399,63 @@ html {
             return div;
         }
 
-        // --- helper: find a placement position that touches the farthest active ball's east/west border,
-        //     falling back to that ball's southern border if the east/west spot is already occupied ---
+        // --- helper: find a placement position based on the farthest vertically active ball from the origin ball ---
         function findPlacementPosition() {
-            let activeBalls = allBalls.filter(b => b.active);
+            // Origin ball = the very first original diamond ball (top of the layout)
+            let originBall = allBalls.find(b => b.id === 'table_0' && b.active);
 
-            if (activeBalls.length === 0) {
+            if (!originBall) {
+                // Fallback: any remaining original ball, else any active ball
+                let originalBalls = allBalls.filter(b => b.active && b.isOriginal);
+                originBall = originalBalls[0] || allBalls.filter(b => b.active)[0];
+            }
+
+            if (!originBall) {
                 // No balls at all → fallback center
                 return { x: 400, y: 390 };
             }
 
-            let occupied = activeBalls.map(b => ({ x: b.x, y: b.y }));
-            function isOccupied(x, y) {
-                return occupied.some(occ => Math.abs(occ.x - x) < 5 && Math.abs(occ.y - y) < 5);
+            // Occupied positions (for collision check)
+            let occupied = allBalls.filter(b => b.active).map(b => ({ x: b.x, y: b.y }));
+
+            function isOpen(x, y) {
+                if (x < 0 || x > 800 || y < 0 || y > 600) return false;
+                return !occupied.some(occ => Math.abs(occ.x - x) < 5 && Math.abs(occ.y - y) < 5);
             }
 
-            // The deck ball's origin (spawn slot) — "farthest" is measured from here
-            let originX = 445;
-            let originY = 515;
+            // Find the farthest vertically active ball from the origin ball (by |dy|)
+            let candidates = allBalls.filter(b => b.active && b !== originBall);
 
-            // Find the active ball with the greatest straight-line distance from the origin
-            let farBall = activeBalls.reduce((a, b) => {
-                let da = Math.hypot(a.x - originX, a.y - originY);
-                let db = Math.hypot(b.x - originX, b.y - originY);
-                return db > da ? b : a;
-            });
-
-            // Attach on whichever side (east/west) continues away from the origin
-            let direction = farBall.x >= originX ? 'east' : 'west';
-
-            // 1) Try to touch the farthest ball's east/west border (70px diameter + 2px margin)
-            let sideX = direction === 'east' ? farBall.x + 72 : farBall.x - 72;
-            let sideY = farBall.y;
-            if (sideX >= 0 && sideX <= 800 && !isOccupied(sideX, sideY)) {
-                return { x: sideX, y: sideY };
+            let farthestBall = originBall;
+            let maxDist = -1;
+            for (let b of candidates) {
+                let dist = Math.abs(b.y - originBall.y);
+                if (dist > maxDist) {
+                    maxDist = dist;
+                    farthestBall = b;
+                }
             }
 
-            // 2) East/west spot already occupied → touch the southern border instead
-            let southX = farBall.x;
-            let southY = farBall.y + 72;
+            // 1) Try east border of the farthest ball
+            let eastPos = { x: farthestBall.x + 72, y: farthestBall.y };
+            if (isOpen(eastPos.x, eastPos.y)) return eastPos;
+
+            // 2) Try west border of the farthest ball
+            let westPos = { x: farthestBall.x - 72, y: farthestBall.y };
+            if (isOpen(westPos.x, westPos.y)) return westPos;
+
+            // 3) East and west both blocked → drop to the southern border,
+            //    stepping further south if that spot is also occupied
+            let southY = farthestBall.y + 72;
             while (southY <= 600) {
-                if (!isOccupied(southX, southY)) {
-                    return { x: southX, y: southY };
+                if (isOpen(farthestBall.x, southY)) {
+                    return { x: farthestBall.x, y: southY };
                 }
                 southY += 72;
             }
 
-            // 3) Last resort fallback
-            return { x: 400, y: 390 };
+            // 4) Nothing open below → last-resort fallback
+            return { x: farthestBall.x, y: 600 };
         }
 
         // --- Draw / Skip Logic ---
@@ -460,8 +469,7 @@ html {
                     updateHUD();
                 }
 
-                // ---- PLACEMENT LOGIC: touch the farthest active ball's east/west border,
-                //      or its southern border if that spot is already occupied ----
+                // ---- PLACEMENT LOGIC: always touch at least one original diamond ball ----
                 let placement = findPlacementPosition();
 
                 if (placement) {

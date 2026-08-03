@@ -415,8 +415,16 @@ html {
             // Occupied positions (for collision check)
             let occupied = allBalls.filter(b => b.active).map(b => ({ x: b.x, y: b.y }));
 
+            // Topmost row currently occupied by an active table ball — new balls must never
+            // land above this (i.e. only at this y or lower/greater y values)
+            let activeTableBalls = allBalls.filter(b => b.active && b.id.startsWith('table_'));
+            let minActiveY = activeTableBalls.length > 0
+                ? Math.min(...activeTableBalls.map(b => b.y))
+                : -Infinity;
+
             // 1) Check empty spots from the classic diamond layout
             let emptySpots = tablePositions.filter(pos => {
+                if (pos.y < minActiveY - 5) return false; // never place higher than existing balls
                 return !occupied.some(occ => Math.abs(occ.x - pos.x) < 5 && Math.abs(occ.y - pos.y) < 5);
             });
 
@@ -430,9 +438,29 @@ html {
             });
 
             if (adjacentEmpty.length > 0) {
-                // highest (lowest y) first
-                adjacentEmpty.sort((a, b) => a.y - b.y);
-                return adjacentEmpty[0];
+                // highest (lowest y) row first
+                let minY = Math.min(...adjacentEmpty.map(p => p.y));
+                let topRow = adjacentEmpty.filter(p => Math.abs(p.y - minY) < 1);
+
+                if (topRow.length > 1) {
+                    // Among the topmost row's spots, prefer the one that sits most directly
+                    // above (smallest horizontal offset to) a ball resting below it
+                    topRow.forEach(pos => {
+                        let bestDx = Infinity;
+                        allBalls.filter(b => b.active).forEach(ball => {
+                            if (ball.y > pos.y) {
+                                let dx = Math.abs(ball.x - pos.x);
+                                let dy = ball.y - pos.y;
+                                let dist = Math.sqrt(dx * dx + dy * dy);
+                                if (dist <= 72 && dx < bestDx) bestDx = dx;
+                            }
+                        });
+                        pos._supportDx = bestDx;
+                    });
+                    topRow.sort((a, b) => a._supportDx - b._supportDx);
+                }
+
+                return topRow[0];
             }
 
             // 2) No adjacent empty diamond spot → generate new positions around original balls
@@ -446,8 +474,8 @@ html {
                 for (let d of dirs) {
                     let cx = ball.x + d.dx;
                     let cy = ball.y + d.dy;
-                    // within board bounds
-                    if (cx >= 0 && cx <= 800 && cy >= 0 && cy <= 600) {
+                    // within board bounds, and never above the current topmost active row
+                    if (cx >= 0 && cx <= 800 && cy >= 0 && cy <= 600 && cy >= minActiveY - 5) {
                         // not occupied
                         if (!occupied.some(occ => Math.abs(occ.x - cx) < 5 && Math.abs(occ.y - cy) < 5)) {
                             candidates.push({ x: cx, y: cy });
@@ -457,8 +485,26 @@ html {
             }
 
             if (candidates.length > 0) {
-                candidates.sort((a, b) => a.y - b.y);
-                return candidates[0];
+                let minY = Math.min(...candidates.map(p => p.y));
+                let topRow = candidates.filter(p => Math.abs(p.y - minY) < 1);
+
+                if (topRow.length > 1) {
+                    topRow.forEach(pos => {
+                        let bestDx = Infinity;
+                        allBalls.filter(b => b.active).forEach(ball => {
+                            if (ball.y > pos.y) {
+                                let dx = Math.abs(ball.x - pos.x);
+                                let dy = ball.y - pos.y;
+                                let dist = Math.sqrt(dx * dx + dy * dy);
+                                if (dist <= 72 && dx < bestDx) bestDx = dx;
+                            }
+                        });
+                        pos._supportDx = bestDx;
+                    });
+                    topRow.sort((a, b) => a._supportDx - b._supportDx);
+                }
+
+                return topRow[0];
             }
 
             // 3) No candidate found → fallback to overflow grid (should be rare)

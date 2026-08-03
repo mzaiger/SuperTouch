@@ -399,55 +399,42 @@ html {
             return div;
         }
 
-        // --- helper: find a placement position that touches at least one original diamond ball ---
+        // --- helper: find the topmost open slot that touches an active ball on its south side ---
         function findPlacementPosition() {
-            // Original diamond balls (active)
-            let originalBalls = allBalls.filter(b => b.active && b.isOriginal);
-            
-            // If no original balls remain, fallback to any active ball (should not happen)
-            let referenceBalls = originalBalls.length > 0 ? originalBalls : allBalls.filter(b => b.active);
-
-            if (referenceBalls.length === 0) {
-                // No balls at all → fallback center
+            let activeBalls = allBalls.filter(b => b.active);
+            if (activeBalls.length === 0) {
                 return { x: 400, y: 390 };
             }
 
-            // Occupied positions (for collision check)
-            let occupied = allBalls.filter(b => b.active).map(b => ({ x: b.x, y: b.y }));
+            let occupied = activeBalls.map(b => ({ x: b.x, y: b.y }));
 
             // Topmost row currently occupied by an active table ball — new balls must never
-            // land above this (i.e. only at this y or lower/greater y values)
-            let activeTableBalls = allBalls.filter(b => b.active && b.id.startsWith('table_'));
-            let minActiveY = activeTableBalls.length > 0
-                ? Math.min(...activeTableBalls.map(b => b.y))
+            // land above this
+            let tableBalls = activeBalls.filter(b => b.id.startsWith('table_'));
+            let minActiveY = tableBalls.length > 0
+                ? Math.min(...tableBalls.map(b => b.y))
                 : -Infinity;
 
-            // 1) Check empty spots from the classic diamond layout
-            let emptySpots = tablePositions.filter(pos => {
-                if (pos.y < minActiveY - 5) return false; // never place higher than existing balls
-                return !occupied.some(occ => Math.abs(occ.x - pos.x) < 5 && Math.abs(occ.y - pos.y) < 5);
-            });
-
-            // Keep only those that are adjacent (distance ≤ 72) to at least one original ball (70px + 2px margin)
-            let adjacentEmpty = emptySpots.filter(pos => {
-                return originalBalls.some(ball => {
+            // Does this spot touch (distance ≤ 72, 70px diameter + margin) an active ball
+            // that sits on its south (lower) side?
+            function hasSouthSupport(pos) {
+                return activeBalls.some(ball => {
+                    if (ball.y <= pos.y) return false; // must be strictly south
                     let dx = ball.x - pos.x;
                     let dy = ball.y - pos.y;
                     return Math.sqrt(dx * dx + dy * dy) <= 72;
                 });
-            });
+            }
 
-            if (adjacentEmpty.length > 0) {
-                // highest (lowest y) row first
-                let minY = Math.min(...adjacentEmpty.map(p => p.y));
-                let topRow = adjacentEmpty.filter(p => Math.abs(p.y - minY) < 1);
-
+            // Given a list of candidate spots, pick the topmost, breaking ties by whichever
+            // sits most directly above (smallest horizontal offset to) its south support
+            function pickTopmost(list) {
+                let minY = Math.min(...list.map(p => p.y));
+                let topRow = list.filter(p => Math.abs(p.y - minY) < 1);
                 if (topRow.length > 1) {
-                    // Among the topmost row's spots, prefer the one that sits most directly
-                    // above (smallest horizontal offset to) a ball resting below it
                     topRow.forEach(pos => {
                         let bestDx = Infinity;
-                        allBalls.filter(b => b.active).forEach(ball => {
+                        activeBalls.forEach(ball => {
                             if (ball.y > pos.y) {
                                 let dx = Math.abs(ball.x - pos.x);
                                 let dy = ball.y - pos.y;
@@ -459,13 +446,27 @@ html {
                     });
                     topRow.sort((a, b) => a._supportDx - b._supportDx);
                 }
-
                 return topRow[0];
             }
 
-            // 2) No adjacent empty diamond spot → generate new positions around original balls
-            let candidates = [];
-            for (let ball of originalBalls) {
+            // 1) Empty spots from the classic diamond layout that touch a ball below them
+            let candidates = tablePositions.filter(pos => {
+                if (occupied.some(occ => Math.abs(occ.x - pos.x) < 5 && Math.abs(occ.y - pos.y) < 5)) return false;
+                if (pos.y < minActiveY - 5) return false;
+                return hasSouthSupport(pos);
+            });
+
+            if (candidates.length > 0) {
+                return pickTopmost(candidates);
+            }
+
+            // 2) No classic slot qualifies → generate positions around active balls and
+            // keep only ones that still touch a ball on their south side
+            let referenceBalls = allBalls.filter(b => b.active && b.isOriginal);
+            if (referenceBalls.length === 0) referenceBalls = activeBalls;
+
+            let fallbackCandidates = [];
+            for (let ball of referenceBalls) {
                 // 8 directions at distance 72px (diameter + margin)
                 let dirs = [
                     { dx: 72, dy: 0 }, { dx: -72, dy: 0 }, { dx: 0, dy: 72 }, { dx: 0, dy: -72 },
@@ -474,41 +475,22 @@ html {
                 for (let d of dirs) {
                     let cx = ball.x + d.dx;
                     let cy = ball.y + d.dy;
-                    // within board bounds, and never above the current topmost active row
                     if (cx >= 0 && cx <= 800 && cy >= 0 && cy <= 600 && cy >= minActiveY - 5) {
-                        // not occupied
                         if (!occupied.some(occ => Math.abs(occ.x - cx) < 5 && Math.abs(occ.y - cy) < 5)) {
-                            candidates.push({ x: cx, y: cy });
+                            if (hasSouthSupport({ x: cx, y: cy })) {
+                                fallbackCandidates.push({ x: cx, y: cy });
+                            }
                         }
                     }
                 }
             }
 
-            if (candidates.length > 0) {
-                let minY = Math.min(...candidates.map(p => p.y));
-                let topRow = candidates.filter(p => Math.abs(p.y - minY) < 1);
-
-                if (topRow.length > 1) {
-                    topRow.forEach(pos => {
-                        let bestDx = Infinity;
-                        allBalls.filter(b => b.active).forEach(ball => {
-                            if (ball.y > pos.y) {
-                                let dx = Math.abs(ball.x - pos.x);
-                                let dy = ball.y - pos.y;
-                                let dist = Math.sqrt(dx * dx + dy * dy);
-                                if (dist <= 72 && dx < bestDx) bestDx = dx;
-                            }
-                        });
-                        pos._supportDx = bestDx;
-                    });
-                    topRow.sort((a, b) => a._supportDx - b._supportDx);
-                }
-
-                return topRow[0];
+            if (fallbackCandidates.length > 0) {
+                return pickTopmost(fallbackCandidates);
             }
 
-            // 3) No candidate found → fallback to overflow grid (should be rare)
-            let fallback = originalBalls[0];
+            // 3) No south-supported spot found at all (rare) → last-resort overflow
+            let fallback = tableBalls[0] || activeBalls[0];
             if (fallback) {
                 return { x: fallback.x + 72, y: fallback.y };
             }

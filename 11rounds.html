@@ -399,74 +399,37 @@ html {
             return div;
         }
 
-        // --- helper: find a placement position that touches at least one original diamond ball ---
-        function findPlacementPosition() {
-            // Original diamond balls (active)
-            let originalBalls = allBalls.filter(b => b.active && b.isOriginal);
-            
-            // If no original balls remain, fallback to any active ball (should not happen)
-            let referenceBalls = originalBalls.length > 0 ? originalBalls : allBalls.filter(b => b.active);
+        // --- helper: place the skipped ball on the southern border of the highest active ball, ---
+        // --- filling each row left-to-right so new balls touch the edge of whatever is already ---
+        // --- sitting in that row (active or not).                                              ---
+        function findSkipPlacementPosition() {
+            const BALL_SIZE = 85;   // full ball diameter — balls sit edge-to-edge when touching
+            const ROW_HEIGHT = 42;  // vertical spacing between rows (matches tablePositions)
 
-            if (referenceBalls.length === 0) {
-                // No balls at all → fallback center
-                return { x: 400, y: 390 };
+            // 1) Find the highest (topmost = smallest y) active ball on the table
+            let activeBalls = allBalls.filter(b => b.active && b.id.startsWith('table_'));
+            if (activeBalls.length === 0) {
+                // Board is empty → fallback to center/top
+                return { x: 400, y: 146 };
+            }
+            activeBalls.sort((a, b) => a.y - b.y);
+            let highestBall = activeBalls[0];
+
+            // 2) The target row is the southern border of that highest ball
+            let targetY = highestBall.y + ROW_HEIGHT;
+
+            // 3) Look for any ball already in that row — active or not — so the row keeps
+            //    building left-to-right even if earlier balls in it were already cleared.
+            let rowBalls = allBalls.filter(b => b.id.startsWith('table_') && Math.abs(b.y - targetY) < 5);
+
+            if (rowBalls.length > 0) {
+                rowBalls.sort((a, b) => a.x - b.x);
+                let rightmost = rowBalls[rowBalls.length - 1];
+                return { x: rightmost.x + BALL_SIZE, y: targetY };
             }
 
-            // Occupied positions (for collision check)
-            let occupied = allBalls.filter(b => b.active).map(b => ({ x: b.x, y: b.y }));
-
-            // 1) Check empty spots from the classic diamond layout
-            let emptySpots = tablePositions.filter(pos => {
-                return !occupied.some(occ => Math.abs(occ.x - pos.x) < 5 && Math.abs(occ.y - pos.y) < 5);
-            });
-
-            // Keep only those that are adjacent (distance ≤ 72) to at least one original ball (70px + 2px margin)
-            let adjacentEmpty = emptySpots.filter(pos => {
-                return originalBalls.some(ball => {
-                    let dx = ball.x - pos.x;
-                    let dy = ball.y - pos.y;
-                    return Math.sqrt(dx * dx + dy * dy) <= 72;
-                });
-            });
-
-            if (adjacentEmpty.length > 0) {
-                // lowest (highest y) first
-                adjacentEmpty.sort((a, b) => b.y - a.y);
-                return adjacentEmpty[0];
-            }
-
-            // 2) No adjacent empty diamond spot → generate new positions around original balls
-            let candidates = [];
-            for (let ball of originalBalls) {
-                // 8 directions at distance 72px (diameter + margin)
-                let dirs = [
-                    { dx: 72, dy: 0 }, { dx: -72, dy: 0 }, { dx: 0, dy: 72 }, { dx: 0, dy: -72 },
-                    { dx: 51, dy: 51 }, { dx: -51, dy: 51 }, { dx: 51, dy: -51 }, { dx: -51, dy: -51 }
-                ];
-                for (let d of dirs) {
-                    let cx = ball.x + d.dx;
-                    let cy = ball.y + d.dy;
-                    // within board bounds
-                    if (cx >= 0 && cx <= 800 && cy >= 0 && cy <= 600) {
-                        // not occupied
-                        if (!occupied.some(occ => Math.abs(occ.x - cx) < 5 && Math.abs(occ.y - cy) < 5)) {
-                            candidates.push({ x: cx, y: cy });
-                        }
-                    }
-                }
-            }
-
-            if (candidates.length > 0) {
-                candidates.sort((a, b) => b.y - a.y);
-                return candidates[0];
-            }
-
-            // 3) No candidate found → fallback to overflow grid (should be rare)
-            let fallback = originalBalls[0];
-            if (fallback) {
-                return { x: fallback.x + 72, y: fallback.y };
-            }
-            return { x: 400, y: 390 };
+            // 4) No ball in that row yet → sit directly under the highest ball, no touch required
+            return { x: highestBall.x, y: targetY };
         }
 
         // --- Draw / Skip Logic ---
@@ -480,35 +443,14 @@ html {
                     updateHUD();
                 }
 
-                // ---- PLACEMENT LOGIC: always touch at least one original diamond ball ----
-                let placement = findPlacementPosition();
+                // ---- PLACEMENT LOGIC: attach the skipped ball to the southern border of the ----
+                // ---- highest active ball, building each row left-to-right as balls are added ----
+                let placement = findSkipPlacementPosition();
 
-                if (placement) {
-                    currentDeckBall.id = `table_replaced_${Math.random()}`;
-                    currentDeckBall.x = placement.x;
-                    currentDeckBall.y = placement.y;
-                    currentDeckBall.isOriginal = false;
-                } else {
-                    // Fallback: overflow (maintains original grid, but still tries to be adjacent)
-                    currentDeckBall.id = `table_overflow_${overflowCount}`;
-                    let centerOffsets = [0, -72, 72, -144, 144, -216, 216];
-                    let colNum = overflowCount % 7;
-                    let rowNum = Math.floor(overflowCount / 7);
-                    let fallbackX = 400 + centerOffsets[colNum];
-                    let fallbackY = 390 + (rowNum * 72);
-                    // adjust fallback to be near the lowest original ball if possible
-                    let lowestOriginal = allBalls.filter(b => b.active && b.isOriginal).sort((a, b) => b.y - a.y)[0];
-                    if (lowestOriginal) {
-                        let tryY = lowestOriginal.y + 72;
-                        if (tryY <= 600 && !allBalls.some(b => b.active && Math.abs(b.x - fallbackX) < 5 && Math.abs(b.y - tryY) < 5)) {
-                            fallbackY = tryY;
-                        }
-                    }
-                    currentDeckBall.x = fallbackX;
-                    currentDeckBall.y = fallbackY;
-                    currentDeckBall.isOriginal = false;
-                    overflowCount++;
-                }
+                currentDeckBall.id = `table_replaced_${Math.random()}`;
+                currentDeckBall.x = placement.x;
+                currentDeckBall.y = placement.y;
+                currentDeckBall.isOriginal = false;
 
                 // Animate to new position
                 currentDeckBall.element.style.left = `${currentDeckBall.x}px`;

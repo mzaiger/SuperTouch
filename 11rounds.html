@@ -430,8 +430,8 @@ html {
             });
 
             if (adjacentEmpty.length > 0) {
-                // lowest (highest y) first
-                adjacentEmpty.sort((a, b) => b.y - a.y);
+                // highest (lowest y) first
+                adjacentEmpty.sort((a, b) => a.y - b.y);
                 return adjacentEmpty[0];
             }
 
@@ -457,7 +457,7 @@ html {
             }
 
             if (candidates.length > 0) {
-                candidates.sort((a, b) => b.y - a.y);
+                candidates.sort((a, b) => a.y - b.y);
                 return candidates[0];
             }
 

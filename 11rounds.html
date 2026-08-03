@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>11 Rounds Puzzle - Classic Arcade</title>
+    <script src="sfx.js"></script>
     <style>
         :root {
             --wood: #3a2311;
@@ -14,7 +15,7 @@
         }
 
 html {
-    transform: scale(0.9);
+    transform: scale(0.64);
     transform-origin: top center; 
 }
 
@@ -57,8 +58,8 @@ html {
 
         #game-container {
             position: relative;
-            width: 800px;
-            height: 600px;
+            width: 850px;
+            height: 620px;
             background: radial-gradient(circle at center, var(--felt-light) 0%, var(--felt-dark) 100%);
             border: 25px solid var(--cushion);
             border-radius: 10px;
@@ -100,8 +101,8 @@ html {
 
         /* --- Ball size increased to 105px --- */
         .ball {
-            width: 105px;
-            height: 105px;
+            width: 85px;
+            height: 85px;
             border-radius: 50%;
             position: absolute;
             display: flex;
@@ -165,8 +166,8 @@ html {
         /* number circle inside the ball - slightly bigger to match */
         .number-circle {
             background: #fff;
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 48px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -282,12 +283,15 @@ html {
             <div class="hud-box">
                 <span style="color: #00aaff;">SCORE:</span> <span id="scoreDisplay" class="text-glow">0</span>
             </div>
+            <div class="hud-box" style="border-color: #ff44aa;">
+                <span style="color: #ff44aa;">BEST:</span> <span id="bestDisplay" class="text-glow">0</span>
+            </div>
         </div>
 
         <button id="drawBtn" style="position: absolute; left: 240px; top: 520px; z-index: 60; margin: 0; padding: 12px 20px; font-size: 1.1em;">DRAW / SKIP</button>
         <!-- deck slot sized to 105px to match balls -->
-        <div id="deck-slot" style="position: absolute; left: 445px; top: 500px; width: 105px; height: 105px; border: 3px dashed rgba(255,255,255,0.4); border-radius: 50%; box-sizing: border-box;"></div>
-        <div id="deck-count" style="position: absolute; left: 525px; top: 535px; font-weight: bold; font-size: 1.2em; color: #aaffaa; text-shadow: 1px 1px 3px #000;"></div>
+        <div id="deck-slot" style="position: absolute; left: 435px; top: 505px; width: 106px; height: 106px; border: 3px dashed rgba(255,255,255,0.4); border-radius: 50%; box-sizing: border-box;"></div>
+        <div id="deck-count" style="position: absolute; left: 625px; top: 535px; font-weight: bold; font-size: 1.2em; color: #aaffaa; text-shadow: 1px 1px 3px #000;"></div>
 
         <div id="end-overlay" class="overlay">
             <h2 id="end-title">Table Cleared!</h2>
@@ -325,14 +329,15 @@ html {
         const endOverlay = document.getElementById('end-overlay');
         const leaderboardOverlay = document.getElementById('leaderboard-overlay');
         const deckCountDisplay = document.getElementById('deck-count');
+        const bestDisplay = document.getElementById('bestDisplay');
 
         // --- Layout Definitions (positions unchanged) ---
         const tablePositions = [
-            { x: 300, y: 146 }, { x: 400, y: 146 }, { x: 500, y: 146 },
-            { x: 275, y: 188 }, { x: 325, y: 188 }, { x: 375, y: 188 }, { x: 425, y: 188 }, { x: 475, y: 188 }, { x: 525, y: 188 },
-            { x: 250, y: 230 }, { x: 300, y: 230 }, { x: 350, y: 230 }, { x: 400, y: 230 }, { x: 450, y: 230 }, { x: 500, y: 230 }, { x: 550, y: 230 },
-            { x: 275, y: 272 }, { x: 325, y: 272 }, { x: 475, y: 272 }, { x: 525, y: 272 },
-            { x: 300, y: 314 }, { x: 500, y: 314 }
+            { x: 230, y: 146 }, { x: 400, y: 146 }, { x: 570, y: 146 },
+            { x: 187.5, y: 188 }, { x: 272.5, y: 188 }, { x: 357.5, y: 188 }, { x: 442.5, y: 188 }, { x: 527.5, y: 188 }, { x: 612.5, y: 188 },
+            { x: 145, y: 230 }, { x: 230, y: 230 }, { x: 315, y: 230 }, { x: 400, y: 230 }, { x: 485, y: 230 }, { x: 570, y: 230 }, { x: 655, y: 230 },
+            { x: 187.5, y: 272 }, { x: 272.5, y: 272 }, { x: 527.5, y: 272 }, { x: 612.5, y: 272 },
+            { x: 230, y: 314 }, { x: 570, y: 314 }
         ];
 
         // --- Initialization ---
@@ -628,6 +633,9 @@ html {
 
         // --- Match & Bust ---
         function processMatch() {
+            // ── SFX.good() on match ──
+            if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
+
             document.body.style.pointerEvents = 'none';
             setTimeout(() => {
                 selectedBalls.forEach(b => {
@@ -650,6 +658,9 @@ html {
         }
 
         function processBust() {
+            // ── SFX.bad() on bust ──
+            if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
+
             document.body.style.pointerEvents = 'none';
             selectedBalls.forEach(b => b.element.classList.add('error'));
             setTimeout(() => {
@@ -704,6 +715,9 @@ html {
         }
 
         function endGame(message) {
+            // ── SFX.over() ──
+            if (typeof SFX !== 'undefined' && SFX.over) SFX.over();
+
             document.getElementById('end-title').innerText = message;
             document.getElementById('final-score').innerText = score;
             setTimeout(() => {
@@ -715,6 +729,8 @@ html {
         function updateHUD() {
             scoreDisplay.innerText = score;
             sumDisplay.innerText = currentSum;
+            let board = getLeaderboard();
+            bestDisplay.innerText = board.length > 0 ? board[0].score : 0;
         }
 
         // --- Leaderboard ---

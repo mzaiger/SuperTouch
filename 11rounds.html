@@ -399,37 +399,54 @@ html {
             return div;
         }
 
-        // --- helper: place the skipped ball on the southern border of the highest active ball, ---
-        // --- filling each row left-to-right so new balls touch the edge of whatever is already ---
-        // --- sitting in that row (active or not).                                              ---
-        function findSkipPlacementPosition() {
-            const BALL_SIZE = 85;   // full ball diameter — balls sit edge-to-edge when touching
-            const ROW_HEIGHT = 42;  // vertical spacing between rows (matches tablePositions)
+        // --- helper: find a placement position that touches the farthest active ball's east/west border,
+        //     falling back to that ball's southern border if the east/west spot is already occupied ---
+        function findPlacementPosition() {
+            let activeBalls = allBalls.filter(b => b.active);
 
-            // 1) Find the highest (topmost = smallest y) active ball on the table
-            let activeBalls = allBalls.filter(b => b.active && b.id.startsWith('table_'));
             if (activeBalls.length === 0) {
-                // Board is empty → fallback to center/top
-                return { x: 400, y: 146 };
-            }
-            activeBalls.sort((a, b) => a.y - b.y);
-            let highestBall = activeBalls[0];
-
-            // 2) The target row is the southern border of that highest ball
-            let targetY = highestBall.y + ROW_HEIGHT;
-
-            // 3) Look for any ball already in that row — active or not — so the row keeps
-            //    building left-to-right even if earlier balls in it were already cleared.
-            let rowBalls = allBalls.filter(b => b.id.startsWith('table_') && Math.abs(b.y - targetY) < 5);
-
-            if (rowBalls.length > 0) {
-                rowBalls.sort((a, b) => a.x - b.x);
-                let rightmost = rowBalls[rowBalls.length - 1];
-                return { x: rightmost.x + BALL_SIZE, y: targetY };
+                // No balls at all → fallback center
+                return { x: 400, y: 390 };
             }
 
-            // 4) No ball in that row yet → sit directly under the highest ball, no touch required
-            return { x: highestBall.x, y: targetY };
+            let occupied = activeBalls.map(b => ({ x: b.x, y: b.y }));
+            function isOccupied(x, y) {
+                return occupied.some(occ => Math.abs(occ.x - x) < 5 && Math.abs(occ.y - y) < 5);
+            }
+
+            // The deck ball's origin (spawn slot) — "farthest" is measured from here
+            let originX = 445;
+            let originY = 515;
+
+            // Find the active ball with the greatest straight-line distance from the origin
+            let farBall = activeBalls.reduce((a, b) => {
+                let da = Math.hypot(a.x - originX, a.y - originY);
+                let db = Math.hypot(b.x - originX, b.y - originY);
+                return db > da ? b : a;
+            });
+
+            // Attach on whichever side (east/west) continues away from the origin
+            let direction = farBall.x >= originX ? 'east' : 'west';
+
+            // 1) Try to touch the farthest ball's east/west border (70px diameter + 2px margin)
+            let sideX = direction === 'east' ? farBall.x + 72 : farBall.x - 72;
+            let sideY = farBall.y;
+            if (sideX >= 0 && sideX <= 800 && !isOccupied(sideX, sideY)) {
+                return { x: sideX, y: sideY };
+            }
+
+            // 2) East/west spot already occupied → touch the southern border instead
+            let southX = farBall.x;
+            let southY = farBall.y + 72;
+            while (southY <= 600) {
+                if (!isOccupied(southX, southY)) {
+                    return { x: southX, y: southY };
+                }
+                southY += 72;
+            }
+
+            // 3) Last resort fallback
+            return { x: 400, y: 390 };
         }
 
         // --- Draw / Skip Logic ---
@@ -443,14 +460,36 @@ html {
                     updateHUD();
                 }
 
-                // ---- PLACEMENT LOGIC: attach the skipped ball to the southern border of the ----
-                // ---- highest active ball, building each row left-to-right as balls are added ----
-                let placement = findSkipPlacementPosition();
+                // ---- PLACEMENT LOGIC: touch the farthest active ball's east/west border,
+                //      or its southern border if that spot is already occupied ----
+                let placement = findPlacementPosition();
 
-                currentDeckBall.id = `table_replaced_${Math.random()}`;
-                currentDeckBall.x = placement.x;
-                currentDeckBall.y = placement.y;
-                currentDeckBall.isOriginal = false;
+                if (placement) {
+                    currentDeckBall.id = `table_replaced_${Math.random()}`;
+                    currentDeckBall.x = placement.x;
+                    currentDeckBall.y = placement.y;
+                    currentDeckBall.isOriginal = false;
+                } else {
+                    // Fallback: overflow (maintains original grid, but still tries to be adjacent)
+                    currentDeckBall.id = `table_overflow_${overflowCount}`;
+                    let centerOffsets = [0, -72, 72, -144, 144, -216, 216];
+                    let colNum = overflowCount % 7;
+                    let rowNum = Math.floor(overflowCount / 7);
+                    let fallbackX = 400 + centerOffsets[colNum];
+                    let fallbackY = 390 + (rowNum * 72);
+                    // adjust fallback to be near the lowest original ball if possible
+                    let lowestOriginal = allBalls.filter(b => b.active && b.isOriginal).sort((a, b) => b.y - a.y)[0];
+                    if (lowestOriginal) {
+                        let tryY = lowestOriginal.y + 72;
+                        if (tryY <= 600 && !allBalls.some(b => b.active && Math.abs(b.x - fallbackX) < 5 && Math.abs(b.y - tryY) < 5)) {
+                            fallbackY = tryY;
+                        }
+                    }
+                    currentDeckBall.x = fallbackX;
+                    currentDeckBall.y = fallbackY;
+                    currentDeckBall.isOriginal = false;
+                    overflowCount++;
+                }
 
                 // Animate to new position
                 currentDeckBall.element.style.left = `${currentDeckBall.x}px`;

@@ -399,18 +399,15 @@ html {
             return div;
         }
 
-        // --- helper: find a placement position based on the farthest vertically active ball from the origin ball ---
+        // --- helper: find a placement position that touches at least one original diamond ball ---
         function findPlacementPosition() {
-            // Origin ball = the very first original diamond ball (top of the layout)
-            let originBall = allBalls.find(b => b.id === 'table_0' && b.active);
+            // Original diamond balls (active)
+            let originalBalls = allBalls.filter(b => b.active && b.isOriginal);
+            
+            // If no original balls remain, fallback to any active ball (should not happen)
+            let referenceBalls = originalBalls.length > 0 ? originalBalls : allBalls.filter(b => b.active);
 
-            if (!originBall) {
-                // Fallback: any remaining original ball, else any active ball
-                let originalBalls = allBalls.filter(b => b.active && b.isOriginal);
-                originBall = originalBalls[0] || allBalls.filter(b => b.active)[0];
-            }
-
-            if (!originBall) {
+            if (referenceBalls.length === 0) {
                 // No balls at all → fallback center
                 return { x: 400, y: 390 };
             }
@@ -418,44 +415,58 @@ html {
             // Occupied positions (for collision check)
             let occupied = allBalls.filter(b => b.active).map(b => ({ x: b.x, y: b.y }));
 
-            function isOpen(x, y) {
-                if (x < 0 || x > 800 || y < 0 || y > 600) return false;
-                return !occupied.some(occ => Math.abs(occ.x - x) < 5 && Math.abs(occ.y - y) < 5);
+            // 1) Check empty spots from the classic diamond layout
+            let emptySpots = tablePositions.filter(pos => {
+                return !occupied.some(occ => Math.abs(occ.x - pos.x) < 5 && Math.abs(occ.y - pos.y) < 5);
+            });
+
+            // Keep only those that are adjacent (distance ≤ 72) to at least one original ball (70px + 2px margin)
+            let adjacentEmpty = emptySpots.filter(pos => {
+                return originalBalls.some(ball => {
+                    let dx = ball.x - pos.x;
+                    let dy = ball.y - pos.y;
+                    return Math.sqrt(dx * dx + dy * dy) <= 72;
+                });
+            });
+
+            if (adjacentEmpty.length > 0) {
+                // lowest (highest y) first
+                adjacentEmpty.sort((a, b) => b.y - a.y);
+                return adjacentEmpty[0];
             }
 
-            // Find the farthest vertically active ball from the origin ball (by |dy|)
-            let candidates = allBalls.filter(b => b.active && b !== originBall);
-
-            let farthestBall = originBall;
-            let maxDist = -1;
-            for (let b of candidates) {
-                let dist = Math.abs(b.y - originBall.y);
-                if (dist > maxDist) {
-                    maxDist = dist;
-                    farthestBall = b;
+            // 2) No adjacent empty diamond spot → generate new positions around original balls
+            let candidates = [];
+            for (let ball of originalBalls) {
+                // 8 directions at distance 72px (diameter + margin)
+                let dirs = [
+                    { dx: 72, dy: 0 }, { dx: -72, dy: 0 }, { dx: 0, dy: 72 }, { dx: 0, dy: -72 },
+                    { dx: 51, dy: 51 }, { dx: -51, dy: 51 }, { dx: 51, dy: -51 }, { dx: -51, dy: -51 }
+                ];
+                for (let d of dirs) {
+                    let cx = ball.x + d.dx;
+                    let cy = ball.y + d.dy;
+                    // within board bounds
+                    if (cx >= 0 && cx <= 800 && cy >= 0 && cy <= 600) {
+                        // not occupied
+                        if (!occupied.some(occ => Math.abs(occ.x - cx) < 5 && Math.abs(occ.y - cy) < 5)) {
+                            candidates.push({ x: cx, y: cy });
+                        }
+                    }
                 }
             }
 
-            // 1) Try east border of the farthest ball
-            let eastPos = { x: farthestBall.x + 72, y: farthestBall.y };
-            if (isOpen(eastPos.x, eastPos.y)) return eastPos;
-
-            // 2) Try west border of the farthest ball
-            let westPos = { x: farthestBall.x - 72, y: farthestBall.y };
-            if (isOpen(westPos.x, westPos.y)) return westPos;
-
-            // 3) East and west both blocked → drop to the southern border,
-            //    stepping further south if that spot is also occupied
-            let southY = farthestBall.y + 72;
-            while (southY <= 600) {
-                if (isOpen(farthestBall.x, southY)) {
-                    return { x: farthestBall.x, y: southY };
-                }
-                southY += 72;
+            if (candidates.length > 0) {
+                candidates.sort((a, b) => b.y - a.y);
+                return candidates[0];
             }
 
-            // 4) Nothing open below → last-resort fallback
-            return { x: farthestBall.x, y: 600 };
+            // 3) No candidate found → fallback to overflow grid (should be rare)
+            let fallback = originalBalls[0];
+            if (fallback) {
+                return { x: fallback.x + 72, y: fallback.y };
+            }
+            return { x: 400, y: 390 };
         }
 
         // --- Draw / Skip Logic ---

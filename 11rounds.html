@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>11 Rounds Puzzle - Classic Arcade</title>
-    <script src="sfx.js"></script>
     <style>
         :root {
             --wood: #3a2311;
@@ -15,7 +14,7 @@
         }
 
 html {
-    transform: scale(0.64);
+    transform: scale(0.9);
     transform-origin: top center; 
 }
 
@@ -58,8 +57,8 @@ html {
 
         #game-container {
             position: relative;
-            width: 850px;
-            height: 620px;
+            width: 800px;
+            height: 600px;
             background: radial-gradient(circle at center, var(--felt-light) 0%, var(--felt-dark) 100%);
             border: 25px solid var(--cushion);
             border-radius: 10px;
@@ -101,8 +100,8 @@ html {
 
         /* --- Ball size increased to 105px --- */
         .ball {
-            width: 85px;
-            height: 85px;
+            width: 105px;
+            height: 105px;
             border-radius: 50%;
             position: absolute;
             display: flex;
@@ -166,8 +165,8 @@ html {
         /* number circle inside the ball - slightly bigger to match */
         .number-circle {
             background: #fff;
-            width: 40px;
-            height: 48px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -283,15 +282,12 @@ html {
             <div class="hud-box">
                 <span style="color: #00aaff;">SCORE:</span> <span id="scoreDisplay" class="text-glow">0</span>
             </div>
-            <div class="hud-box" style="border-color: #ff44aa;">
-                <span style="color: #ff44aa;">BEST:</span> <span id="bestDisplay" class="text-glow">0</span>
-            </div>
         </div>
 
         <button id="drawBtn" style="position: absolute; left: 240px; top: 520px; z-index: 60; margin: 0; padding: 12px 20px; font-size: 1.1em;">DRAW / SKIP</button>
         <!-- deck slot sized to 105px to match balls -->
-        <div id="deck-slot" style="position: absolute; left: 435px; top: 505px; width: 106px; height: 106px; border: 3px dashed rgba(255,255,255,0.4); border-radius: 50%; box-sizing: border-box;"></div>
-        <div id="deck-count" style="position: absolute; left: 625px; top: 535px; font-weight: bold; font-size: 1.2em; color: #aaffaa; text-shadow: 1px 1px 3px #000;"></div>
+        <div id="deck-slot" style="position: absolute; left: 445px; top: 500px; width: 105px; height: 105px; border: 3px dashed rgba(255,255,255,0.4); border-radius: 50%; box-sizing: border-box;"></div>
+        <div id="deck-count" style="position: absolute; left: 525px; top: 535px; font-weight: bold; font-size: 1.2em; color: #aaffaa; text-shadow: 1px 1px 3px #000;"></div>
 
         <div id="end-overlay" class="overlay">
             <h2 id="end-title">Table Cleared!</h2>
@@ -329,15 +325,14 @@ html {
         const endOverlay = document.getElementById('end-overlay');
         const leaderboardOverlay = document.getElementById('leaderboard-overlay');
         const deckCountDisplay = document.getElementById('deck-count');
-        const bestDisplay = document.getElementById('bestDisplay');
 
         // --- Layout Definitions (positions unchanged) ---
         const tablePositions = [
-            { x: 230, y: 146 }, { x: 400, y: 146 }, { x: 570, y: 146 },
-            { x: 187.5, y: 188 }, { x: 272.5, y: 188 }, { x: 357.5, y: 188 }, { x: 442.5, y: 188 }, { x: 527.5, y: 188 }, { x: 612.5, y: 188 },
-            { x: 145, y: 230 }, { x: 230, y: 230 }, { x: 315, y: 230 }, { x: 400, y: 230 }, { x: 485, y: 230 }, { x: 570, y: 230 }, { x: 655, y: 230 },
-            { x: 187.5, y: 272 }, { x: 272.5, y: 272 }, { x: 527.5, y: 272 }, { x: 612.5, y: 272 },
-            { x: 230, y: 314 }, { x: 570, y: 314 }
+            { x: 300, y: 146 }, { x: 400, y: 146 }, { x: 500, y: 146 },
+            { x: 275, y: 188 }, { x: 325, y: 188 }, { x: 375, y: 188 }, { x: 425, y: 188 }, { x: 475, y: 188 }, { x: 525, y: 188 },
+            { x: 250, y: 230 }, { x: 300, y: 230 }, { x: 350, y: 230 }, { x: 400, y: 230 }, { x: 450, y: 230 }, { x: 500, y: 230 }, { x: 550, y: 230 },
+            { x: 275, y: 272 }, { x: 325, y: 272 }, { x: 475, y: 272 }, { x: 525, y: 272 },
+            { x: 300, y: 314 }, { x: 500, y: 314 }
         ];
 
         // --- Initialization ---
@@ -399,74 +394,45 @@ html {
             return div;
         }
 
-        // --- helper: find the topmost open slot that touches an active ball on its south side ---
+        // --- helper: find a placement position that touches at least one original diamond ball ---
         function findPlacementPosition() {
-            let activeBalls = allBalls.filter(b => b.active);
-            if (activeBalls.length === 0) {
+            // Original diamond balls (active)
+            let originalBalls = allBalls.filter(b => b.active && b.isOriginal);
+            
+            // If no original balls remain, fallback to any active ball (should not happen)
+            let referenceBalls = originalBalls.length > 0 ? originalBalls : allBalls.filter(b => b.active);
+
+            if (referenceBalls.length === 0) {
+                // No balls at all → fallback center
                 return { x: 400, y: 390 };
             }
 
-            let occupied = activeBalls.map(b => ({ x: b.x, y: b.y }));
+            // Occupied positions (for collision check)
+            let occupied = allBalls.filter(b => b.active).map(b => ({ x: b.x, y: b.y }));
 
-            // Topmost row currently occupied by an active table ball — new balls must never
-            // land above this
-            let tableBalls = activeBalls.filter(b => b.id.startsWith('table_'));
-            let minActiveY = tableBalls.length > 0
-                ? Math.min(...tableBalls.map(b => b.y))
-                : -Infinity;
+            // 1) Check empty spots from the classic diamond layout
+            let emptySpots = tablePositions.filter(pos => {
+                return !occupied.some(occ => Math.abs(occ.x - pos.x) < 5 && Math.abs(occ.y - pos.y) < 5);
+            });
 
-            // Does this spot touch (distance ≤ 72, 70px diameter + margin) an active ball
-            // that sits on its south (lower) side?
-            function hasSouthSupport(pos) {
-                return activeBalls.some(ball => {
-                    if (ball.y <= pos.y) return false; // must be strictly south
+            // Keep only those that are adjacent (distance ≤ 72) to at least one original ball (70px + 2px margin)
+            let adjacentEmpty = emptySpots.filter(pos => {
+                return originalBalls.some(ball => {
                     let dx = ball.x - pos.x;
                     let dy = ball.y - pos.y;
                     return Math.sqrt(dx * dx + dy * dy) <= 72;
                 });
-            }
-
-            // Given a list of candidate spots, pick the topmost, breaking ties by whichever
-            // sits most directly above (smallest horizontal offset to) its south support
-            function pickTopmost(list) {
-                let minY = Math.min(...list.map(p => p.y));
-                let topRow = list.filter(p => Math.abs(p.y - minY) < 1);
-                if (topRow.length > 1) {
-                    topRow.forEach(pos => {
-                        let bestDx = Infinity;
-                        activeBalls.forEach(ball => {
-                            if (ball.y > pos.y) {
-                                let dx = Math.abs(ball.x - pos.x);
-                                let dy = ball.y - pos.y;
-                                let dist = Math.sqrt(dx * dx + dy * dy);
-                                if (dist <= 72 && dx < bestDx) bestDx = dx;
-                            }
-                        });
-                        pos._supportDx = bestDx;
-                    });
-                    topRow.sort((a, b) => a._supportDx - b._supportDx);
-                }
-                return topRow[0];
-            }
-
-            // 1) Empty spots from the classic diamond layout that touch a ball below them
-            let candidates = tablePositions.filter(pos => {
-                if (occupied.some(occ => Math.abs(occ.x - pos.x) < 5 && Math.abs(occ.y - pos.y) < 5)) return false;
-                if (pos.y < minActiveY - 5) return false;
-                return hasSouthSupport(pos);
             });
 
-            if (candidates.length > 0) {
-                return pickTopmost(candidates);
+            if (adjacentEmpty.length > 0) {
+                // lowest (highest y) first
+                adjacentEmpty.sort((a, b) => b.y - a.y);
+                return adjacentEmpty[0];
             }
 
-            // 2) No classic slot qualifies → generate positions around active balls and
-            // keep only ones that still touch a ball on their south side
-            let referenceBalls = allBalls.filter(b => b.active && b.isOriginal);
-            if (referenceBalls.length === 0) referenceBalls = activeBalls;
-
-            let fallbackCandidates = [];
-            for (let ball of referenceBalls) {
+            // 2) No adjacent empty diamond spot → generate new positions around original balls
+            let candidates = [];
+            for (let ball of originalBalls) {
                 // 8 directions at distance 72px (diameter + margin)
                 let dirs = [
                     { dx: 72, dy: 0 }, { dx: -72, dy: 0 }, { dx: 0, dy: 72 }, { dx: 0, dy: -72 },
@@ -475,22 +441,23 @@ html {
                 for (let d of dirs) {
                     let cx = ball.x + d.dx;
                     let cy = ball.y + d.dy;
-                    if (cx >= 0 && cx <= 800 && cy >= 0 && cy <= 600 && cy >= minActiveY - 5) {
+                    // within board bounds
+                    if (cx >= 0 && cx <= 800 && cy >= 0 && cy <= 600) {
+                        // not occupied
                         if (!occupied.some(occ => Math.abs(occ.x - cx) < 5 && Math.abs(occ.y - cy) < 5)) {
-                            if (hasSouthSupport({ x: cx, y: cy })) {
-                                fallbackCandidates.push({ x: cx, y: cy });
-                            }
+                            candidates.push({ x: cx, y: cy });
                         }
                     }
                 }
             }
 
-            if (fallbackCandidates.length > 0) {
-                return pickTopmost(fallbackCandidates);
+            if (candidates.length > 0) {
+                candidates.sort((a, b) => b.y - a.y);
+                return candidates[0];
             }
 
-            // 3) No south-supported spot found at all (rare) → last-resort overflow
-            let fallback = tableBalls[0] || activeBalls[0];
+            // 3) No candidate found → fallback to overflow grid (should be rare)
+            let fallback = originalBalls[0];
             if (fallback) {
                 return { x: fallback.x + 72, y: fallback.y };
             }
@@ -661,9 +628,6 @@ html {
 
         // --- Match & Bust ---
         function processMatch() {
-            // ── SFX.good() on match ──
-            if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
-
             document.body.style.pointerEvents = 'none';
             setTimeout(() => {
                 selectedBalls.forEach(b => {
@@ -686,9 +650,6 @@ html {
         }
 
         function processBust() {
-            // ── SFX.bad() on bust ──
-            if (typeof SFX !== 'undefined' && SFX.bad) SFX.bad();
-
             document.body.style.pointerEvents = 'none';
             selectedBalls.forEach(b => b.element.classList.add('error'));
             setTimeout(() => {
@@ -743,9 +704,6 @@ html {
         }
 
         function endGame(message) {
-            // ── SFX.over() ──
-            if (typeof SFX !== 'undefined' && SFX.over) SFX.over();
-
             document.getElementById('end-title').innerText = message;
             document.getElementById('final-score').innerText = score;
             setTimeout(() => {
@@ -757,8 +715,6 @@ html {
         function updateHUD() {
             scoreDisplay.innerText = score;
             sumDisplay.innerText = currentSum;
-            let board = getLeaderboard();
-            bestDisplay.innerText = board.length > 0 ? board[0].score : 0;
         }
 
         // --- Leaderboard ---

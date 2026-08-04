@@ -101,7 +101,7 @@
         #timer-section {
             width: 100%;
             max-width: 700px;
-            margin-bottom: 24px;
+            margin-bottom: 10px;
         }
         .timer-label-row {
             display: flex;
@@ -606,28 +606,29 @@
             color: #e0f4ff;
         }
 
-        /* ── TAKE SCORE button (below timer bar) ── */
+        /* ── TAKE SCORE button (lower-right of game area, floats over the board) ── */
         #take-score-btn {
-            display: block;
-            width: 100%;
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            z-index: 400;
             font-family: 'Chango', cursive;
-            font-size: 13px;
+            font-size: 12px;
             letter-spacing: 0.5px;
-            padding: 9px 16px;
-            margin-top: 8px;
+            padding: 9px 14px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             transition: transform 0.1s, opacity 0.2s;
             background: linear-gradient(180deg, #ffc233, #ffaa00);
             color: #1a3a4a;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
         }
         #take-score-btn:hover:not(:disabled) {
-            transform: scale(1.015);
+            transform: scale(1.04);
         }
         #take-score-btn:active:not(:disabled) {
-            transform: scale(0.98);
+            transform: scale(0.96);
         }
         #take-score-btn:disabled {
             opacity: 0.35;
@@ -747,7 +748,6 @@
         <div class="progress-track">
             <div id="time-bar"></div>
         </div>
-        <button id="take-score-btn" title="Bank your score and deal a fresh board">TAKE SCORE ▶ NEXT ROUND</button>
     </div>
 
     <div id="status-bar">&nbsp;</div>
@@ -756,6 +756,7 @@
         <div id="game-area">
             <!-- undo button will be injected here by JS -->
         </div>
+        <button id="take-score-btn" title="Bank your score and deal a fresh board">TAKE SCORE ▶</button>
     </div>
 
     <div id="streak-flash"></div>

@@ -462,15 +462,35 @@ html {
         let timerSeconds11 = GAME_TIME_11;
         let timerHandle11 = null;
 
-        function updateTimerUI11() {
-            const pct = Math.max(0, (timerSeconds11 / GAME_TIME_11) * 100);
-            const bar = document.getElementById('timeBar11');
-            bar.style.width = pct + '%';
-            bar.className = pct > 50 ? '' : pct > 20 ? 'warning' : 'danger';
-            const m = Math.floor(timerSeconds11 / 60);
-            const s = timerSeconds11 % 60;
-            document.getElementById('timeRemaining11').textContent = m + ':' + String(s).padStart(2, '0');
+function updateTimerUI11() {
+    const pct = Math.max(0, (timerSeconds11 / GAME_TIME_11) * 100);
+    const bar = document.getElementById('timeBar11');
+    bar.style.width = pct + '%';
+    bar.className = pct > 50 ? '' : pct > 20 ? 'warning' : 'danger';
+    
+    // ── NEW: Trigger music/sfx when timer turns red ──
+    if (pct <= 20 && timerSeconds11 > 0) {
+        // Pattern 1: Match the other SFX in your code
+        if (typeof SFX !== 'undefined' && SFX.tick) SFX.tick();
+        
+        // Pattern 2: Play a looping HTML audio track
+        let dangerMusic = document.getElementById('danger-music');
+        if (dangerMusic && dangerMusic.paused) {
+            dangerMusic.play();
         }
+    } else {
+        // Stop the music if the timer is above 20% (e.g., when a new round is dealt)
+        let dangerMusic = document.getElementById('danger-music');
+        if (dangerMusic && !dangerMusic.paused) {
+            dangerMusic.pause();
+            dangerMusic.currentTime = 0;
+        }
+    }
+    
+    const m = Math.floor(timerSeconds11 / 60);
+    const s = timerSeconds11 % 60;
+    document.getElementById('timeRemaining11').textContent = m + ':' + String(s).padStart(2, '0');
+}
 
         function startTimer11() {
             clearInterval(timerHandle11);

@@ -101,7 +101,7 @@
         #timer-section {
             width: 100%;
             max-width: 700px;
-            margin-bottom: 10px;
+            margin-bottom: 24px;
         }
         .timer-label-row {
             display: flex;
@@ -606,6 +606,35 @@
             color: #e0f4ff;
         }
 
+        /* ── TAKE SCORE button (below timer bar) ── */
+        #take-score-btn {
+            display: block;
+            width: 100%;
+            font-family: 'Chango', cursive;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            padding: 9px 16px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            background: linear-gradient(180deg, #ffc233, #ffaa00);
+            color: #1a3a4a;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        #take-score-btn:hover:not(:disabled) {
+            transform: scale(1.015);
+        }
+        #take-score-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+        #take-score-btn:disabled {
+            opacity: 0.35;
+            cursor: default;
+            transform: none;
+        }
+
         /* ── UNDO BUTTON in game area (small, right of draw stack) ── */
         #undo-game-btn {
             position: absolute;
@@ -712,12 +741,13 @@
 
     <div id="timer-section">
         <div class="timer-label-row">
-            <span class="timer-label">TIME</span>
+            <span class="timer-label">ROUND <span id="round-val">1</span></span>
             <span id="time-remaining">3:00</span>
         </div>
         <div class="progress-track">
             <div id="time-bar"></div>
         </div>
+        <button id="take-score-btn" title="Bank your score and deal a fresh board">TAKE SCORE ▶ NEXT ROUND</button>
     </div>
 
     <div id="status-bar">&nbsp;</div>
@@ -1047,6 +1077,9 @@
             if (undoBtnEl) {
                 undoBtnEl.disabled = history.length === 0 || gameOver;
             }
+            document.getElementById('round-val').textContent = boardRefreshCount + 1;
+            const tsBtn = document.getElementById('take-score-btn');
+            if (tsBtn) tsBtn.disabled = gameOver;
         }
 
         function setStatus(msg) {
@@ -1112,11 +1145,10 @@
         }
 
         // ════════════════════════════════════════════════════════
-        //  Board Refresh (clear without ending)
+        //  Board Refresh (clear without ending) / Next Round
         // ════════════════════════════════════════════════════════
-        function refreshBoard() {
+        function dealFreshBoard() {
             boardRefreshCount++;
-            score += PTS_WIN_BONUS;
 
             let all = [];
             for (const s of SUITS)
@@ -1131,9 +1163,22 @@
             history = [];
 
             updateScoreBar();
-            setStatus('');
             render();
             if (undoBtnEl) undoBtnEl.disabled = true;
+        }
+
+        function refreshBoard() {
+            score += PTS_WIN_BONUS;
+            dealFreshBoard();
+            setStatus('');
+        }
+
+        // ── Manual "Take Score": bank current score, end this round, deal next ──
+        function takeScore() {
+            if (gameOver) return;
+            if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
+            dealFreshBoard();
+            showBoardFlash('📤 Score banked! Round ' + (boardRefreshCount + 1) + ' begins.');
         }
 
         // ════════════════════════════════════════════════════════
@@ -1506,6 +1551,8 @@
                 renderTop10();
                 updateHiDisplay(); }
         });
+
+        document.getElementById('take-score-btn').addEventListener('click', takeScore);
 
         window.addEventListener('resize', () => { if (!gameOver) render(); });
 

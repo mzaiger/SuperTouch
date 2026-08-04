@@ -490,7 +490,6 @@ html {
   const overlay  = document.getElementById('overlay');
   const overlayTitle  = document.getElementById('overlay-title');
   const overlayDetail = document.getElementById('overlay-detail');
-  const overlayBtn    = document.getElementById('overlay-btn');
   const top10Overlay  = document.getElementById('top10-overlay');
   const top10List     = document.getElementById('top10-list');
   const namePrompt    = document.getElementById('name-prompt');
@@ -857,15 +856,6 @@ html {
         <span class="t10-time">${r.time||''}</span>
       </div>`).join('');
   }
-
-  // ── CONTROLS ──────────────────────────────────────────────────────────────
-  // No "New Game" button in controls.
-  overlayBtn.addEventListener('click', newGame);
-
-  document.getElementById('top10-play-again').addEventListener('click', () => {
-    top10Overlay.classList.remove('visible');
-    newGame();
-  });
 
   document.getElementById('top10-clear').addEventListener('click', () => {
     if (confirm('Clear all scores?')) {

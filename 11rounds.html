@@ -307,6 +307,62 @@ html {
             color: #ffcc00;
             font-weight: bold;
         }
+
+        /* ── round / countdown timer bar ── */
+        #round-timer-section {
+            width: 850px;
+            margin-bottom: 24px;
+        }
+        .timer-label-row-11 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            font-size: 1.1em;
+        }
+        .timer-label-row-11 .round-label {
+            color: #ffcc00;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+        }
+        #timeRemaining11 {
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+        }
+        .progress-track-11 {
+            background: #111;
+            border: 2px solid #00aaff;
+            border-radius: 10px;
+            height: 20px;
+            width: 100%;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.7);
+        }
+        #timeBar11 {
+            height: 100%;
+            width: 100%;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            transition: width 0.4s linear, background 0.4s;
+        }
+        #timeBar11.warning {
+            background: linear-gradient(90deg, #f39c12, #e67e22);
+        }
+        #timeBar11.danger {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+
+        /* ── take score button ── */
+        #takeScoreBtn {
+            background: linear-gradient(to bottom, #ffcc33, #ff9900);
+            color: #1a1a1a;
+        }
+        #takeScoreBtn:disabled {
+            opacity: 0.35;
+            cursor: default;
+            filter: none;
+        }
     </style>
 </head>
 <body>
@@ -314,6 +370,16 @@ html {
     <div class="header-container">
         <h1 class="title-number">11</h1>
         <h1 class="title-text">Rounds</h1>
+    </div>
+
+    <div id="round-timer-section">
+        <div class="timer-label-row-11">
+            <span class="round-label">ROUND <span id="roundVal">1</span></span>
+            <span id="timeRemaining11">1:30</span>
+        </div>
+        <div class="progress-track-11">
+            <div id="timeBar11"></div>
+        </div>
     </div>
 
     <div id="game-container">
@@ -329,14 +395,16 @@ html {
             </div>
         </div>
 
-        <button id="drawBtn" style="position: absolute; left: 240px; top: 520px; z-index: 60; margin: 0; padding: 12px 20px; font-size: 1.1em;">DRAW / SKIP</button>
+        <button id="drawBtn" style="position: absolute; left: 145px; top: 520px; z-index: 60; margin: 0; padding: 12px 20px; font-size: 1.1em;">DRAW / SKIP</button>
         <!-- deck slot sized to 105px to match balls -->
         <div id="deck-slot" style="position: absolute; left: 435px; top: 505px; width: 106px; height: 106px; border: 3px dashed rgba(255,255,255,0.4); border-radius: 50%; box-sizing: border-box;"></div>
         <div id="deck-count" style="position: absolute; left: 625px; top: 535px; font-weight: bold; font-size: 1.2em; color: #aaffaa; text-shadow: 1px 1px 3px #000;"></div>
+        <button id="takeScoreBtn" title="Bank your score and deal a fresh round" style="position: absolute; left: 600px; top: 440px; z-index: 60; margin: 0; padding: 10px 16px; font-size: 1em;">TAKE SCORE ▶</button>
 
         <div id="end-overlay" class="overlay">
             <h2 id="end-title">Table Cleared!</h2>
             <p style="font-size: 2em; margin: 10px 0;">Final Score: <span id="final-score" style="color:#00aaff; font-weight:bold;"></span></p>
+            <p style="font-size: 1.2em; margin: 0 0 10px;">Rounds Played: <span id="final-rounds" style="color:#ffcc00; font-weight:bold;"></span></p>
             <input type="text" id="playerName" placeholder="ENTER INITIALS" maxlength="3" autocomplete="off">
             <button id="saveScoreBtn">Save to Top 10</button>
         </div>
@@ -344,7 +412,7 @@ html {
         <div id="leaderboard-overlay" class="overlay">
             <h2>TOP 10 HI-SCORES</h2>
             <table id="leaderboard-table">
-                <thead><tr><th>RANK</th><th>INITIALS</th><th>SCORE</th></tr></thead>
+                <thead><tr><th>RANK</th><th>INITIALS</th><th>SCORE</th><th>ROUNDS</th></tr></thead>
                 <tbody id="leaderboard-body"></tbody>
             </table>
             <button id="restartBtn">Play Again</button>
@@ -357,11 +425,46 @@ html {
         let currentSum = 0;
         let selectedBalls = [];
         let allBalls = [];
+        let gameOver = false;
+        let roundNum = 1;
 
         // Deck Management Variables
         let deckValues = [];
         let currentDeckBall = null;
         let overflowCount = 0;
+
+        // --- Round Timer ---
+        const GAME_TIME_11 = 90; // 1:30 per session
+        let timerSeconds11 = GAME_TIME_11;
+        let timerHandle11 = null;
+
+        function updateTimerUI11() {
+            const pct = Math.max(0, (timerSeconds11 / GAME_TIME_11) * 100);
+            const bar = document.getElementById('timeBar11');
+            bar.style.width = pct + '%';
+            bar.className = pct > 50 ? '' : pct > 20 ? 'warning' : 'danger';
+            const m = Math.floor(timerSeconds11 / 60);
+            const s = timerSeconds11 % 60;
+            document.getElementById('timeRemaining11').textContent = m + ':' + String(s).padStart(2, '0');
+        }
+
+        function startTimer11() {
+            clearInterval(timerHandle11);
+            timerHandle11 = setInterval(() => {
+                timerSeconds11--;
+                updateTimerUI11();
+                if (timerSeconds11 <= 0) {
+                    clearInterval(timerHandle11);
+                    endGame("TIME'S UP!");
+                }
+            }, 1000);
+        }
+
+        function stopTimer11() { clearInterval(timerHandle11); }
+
+        function updateRoundDisplay11() {
+            document.getElementById('roundVal').textContent = roundNum;
+        }
 
         // DOM Elements
         const gameContainer = document.getElementById('game-container');
@@ -390,11 +493,15 @@ html {
             currentDeckBall = null;
             allBalls.forEach(b => b.element.remove());
             allBalls = [];
+            gameOver = false;
+            roundNum = 1;
             updateHUD();
+            updateRoundDisplay11();
 
             endOverlay.style.display = 'none';
             leaderboardOverlay.style.display = 'none';
             document.body.style.pointerEvents = 'auto';
+            document.getElementById('takeScoreBtn').disabled = false;
 
             // Generate Top Diamonds (mark them as original)
             generateBalls(tablePositions, 'table', true);
@@ -406,6 +513,38 @@ html {
             }
 
             drawBall(); // Draw the very first ball
+
+            timerSeconds11 = GAME_TIME_11;
+            updateTimerUI11();
+            startTimer11();
+        }
+
+        // --- Take Score: bank current score, end this round, deal a fresh table ---
+        function dealFreshRound() {
+            allBalls.forEach(b => b.element.remove());
+            allBalls = [];
+            selectedBalls = [];
+            currentSum = 0;
+            currentDeckBall = null;
+            overflowCount = 0;
+
+            generateBalls(tablePositions, 'table', true);
+
+            deckValues = [];
+            for (let i = 0; i < 28; i++) {
+                deckValues.push(Math.floor(Math.random() * 10) + 1);
+            }
+
+            roundNum++;
+            updateRoundDisplay11();
+            updateHUD();
+            drawBall();
+        }
+
+        function takeScore() {
+            if (gameOver) return;
+            if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
+            dealFreshRound();
         }
 
         function generateBalls(positions, type, isOriginal = false) {
@@ -583,9 +722,12 @@ html {
 
         // Listen for Draw/Skip Button
         document.getElementById('drawBtn').addEventListener('click', () => {
+            if (gameOver) return;
             if (deckValues.length === 0 && !currentDeckBall) return;
             drawBall();
         });
+
+        document.getElementById('takeScoreBtn').addEventListener('click', takeScore);
 
         // --- South-Only Coverage Logic (Distance Based) ---
         function updateCoverage() {
@@ -630,7 +772,7 @@ html {
 
         // --- Ball Click ---
         function handleBallClick(ballData) {
-            if (!ballData.active || ballData.isCovered) return;
+            if (gameOver || !ballData.active || ballData.isCovered) return;
 
             let index = selectedBalls.indexOf(ballData);
             if (index > -1) {
@@ -737,11 +879,17 @@ html {
         }
 
         function endGame(message) {
+            if (gameOver) return;
+            gameOver = true;
+            stopTimer11();
+            document.getElementById('takeScoreBtn').disabled = true;
+
             // ── SFX.over() ──
             if (typeof SFX !== 'undefined' && SFX.over) SFX.over();
 
             document.getElementById('end-title').innerText = message;
             document.getElementById('final-score').innerText = score;
+            document.getElementById('final-rounds').innerText = roundNum;
             setTimeout(() => {
                 endOverlay.style.display = 'flex';
                 document.getElementById('playerName').focus();
@@ -764,7 +912,7 @@ html {
 
         function saveScore(name, finalScore) {
             let board = getLeaderboard();
-            let entry = { name: name.toUpperCase() || 'PLY', score: finalScore };
+            let entry = { name: name.toUpperCase() || 'PLY', score: finalScore, rounds: roundNum };
             board.push(entry);
             board.sort((a, b) => b.score - a.score);
             board = board.slice(0, 10);
@@ -781,14 +929,14 @@ html {
             tbody.innerHTML = '';
 
             if (board.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3">NO RECORDS YET</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4">NO RECORDS YET</td></tr>';
             } else {
                 board.forEach((row, i) => {
                     let tr = document.createElement('tr');
                     if (newEntry && row.name === newEntry.name && row.score === newEntry.score) {
                         tr.className = 'highlight';
                     }
-                    tr.innerHTML = `<td>${i + 1}</td><td>${row.name}</td><td>${row.score}</td>`;
+                    tr.innerHTML = `<td>${i + 1}</td><td>${row.name}</td><td>${row.score}</td><td>${row.rounds || 1}</td>`;
                     tbody.appendChild(tr);
                 });
             }

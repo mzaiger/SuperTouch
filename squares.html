@@ -216,12 +216,12 @@ html {
       width: 100%;
       max-width: 620px;
       display: flex;
+      justify-content: flex-end;
       gap: 10px;
       margin-top: 10px;
     }
 
     .ctrl-btn {
-      flex: 1;
       font-family: 'Chango', cursive;
       font-size: 15px;
       padding: 9px 0;
@@ -236,6 +236,9 @@ html {
     .ctrl-btn:active { transform: scale(0.97); }
 
     #mixup-btn {
+      flex: 0 0 auto;
+      font-size: 12px;
+      padding: 6px 14px;
       background: linear-gradient(180deg, #5faabb, #2c5f7a);
       color: #ecf9fc;
       text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
@@ -247,7 +250,7 @@ html {
     }
     #mixup-btn .mixup-count {
       font-family: 'Anonymous Pro', monospace;
-      font-size: 12px;
+      font-size: 11px;
       opacity: 0.85;
       margin-left: 4px;
     }

@@ -578,13 +578,13 @@ html {
   function updateTimerUI() {
     const pct = timerSeconds / GAME_TIME * 100;
     timeBar.style.width = pct + '%';
-    timeBar.className = pct > 50 ? '' : pct > 25 ? 'warning' : 'danger';
+    timeBar.className = pct > 50 ? '' : pct > 20 ? 'warning' : 'danger';
     const m = Math.floor(timerSeconds / 60);
     const s = timerSeconds % 60;
     timeText.textContent = m + ':' + String(s).padStart(2,'0');
     canvasWrapper.className = pct <= 15 ? 'danger' : '';
 
-    if (pct <= 25 && !hurryFired && gameActive) {
+    if (pct <= 20 && !hurryFired && gameActive) {
       hurryFired = true;
       if (typeof SFX !== 'undefined' && SFX.hurry) SFX.hurry();
     }

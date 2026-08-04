@@ -442,7 +442,6 @@ html {
   <div class="name-box">
     <h2 style="margin-bottom: 12px;">🏆 TOP 10 SCORES</h2>
     <div id="top10-list" style="margin-bottom: 20px;"></div>
-    <button id="top10-clear">clear scores</button>
   </div>
 </div>
 
@@ -856,14 +855,6 @@ html {
         <span class="t10-time">${r.time||''}</span>
       </div>`).join('');
   }
-
-  document.getElementById('top10-clear').addEventListener('click', () => {
-    if (confirm('Clear all scores?')) {
-      saveTop10([]);
-      renderTop10();
-      bestEl.textContent = 0;
-    }
-  });
 
   mixupBtn.addEventListener('click', mixUp);
 

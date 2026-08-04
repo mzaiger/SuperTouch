@@ -1536,19 +1536,6 @@
         // ════════════════════════════════════════════════════════
         //  Events
         // ════════════════════════════════════════════════════════
-        document.getElementById('end-play-again').addEventListener('click', () => {
-            pendingEntry = null;
-            newGame();
-        });
-        document.getElementById('top10-play-again').addEventListener('click', () => {
-            closeOverlay('top10-overlay');
-            newGame();
-        });
-        document.getElementById('top10-clear').addEventListener('click', () => {
-            if (confirm('Clear all scores?')) { saveHS([]);
-                renderTop10();
-                updateHiDisplay(); }
-        });
 
         document.getElementById('take-score-btn').addEventListener('click', takeScore);
 

@@ -235,6 +235,23 @@ html {
     .ctrl-btn:hover { transform: scale(1.03); }
     .ctrl-btn:active { transform: scale(0.97); }
 
+    #mixup-btn {
+      background: linear-gradient(180deg, #5faabb, #2c5f7a);
+      color: #ecf9fc;
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+    }
+    #mixup-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+    #mixup-btn .mixup-count {
+      font-family: 'Anonymous Pro', monospace;
+      font-size: 12px;
+      opacity: 0.85;
+      margin-left: 4px;
+    }
+
     /* ── NAME PROMPT & TOP 10 OVERLAYS ── */
     .full-overlay {
       display: none;
@@ -405,7 +422,9 @@ html {
 </div>
 
 <!-- controls: New Game button removed -->
-<div id="controls"></div>
+<div id="controls">
+  <button id="mixup-btn" class="ctrl-btn">MIX UP <span class="mixup-count" id="mixup-count">(3)</span></button>
+</div>
 
 <div id="name-prompt" class="full-overlay">
   <div class="name-box">
@@ -435,6 +454,7 @@ html {
   const TILE   = 26;   // px
   const BORDER = 0;
   const GAME_TIME = 120; // seconds
+  const MAX_MIXUPS = 3;  // Boxxi-style limited "Mix Up" assists per game
 
   // Colour palette (4 colours + empty = index 0)
   // Each colour: [base, dark shadow, light highlight]
@@ -454,6 +474,7 @@ html {
   let timerInterval = null;
   let gameActive = false;
   let pendingScore = 0; // score to record after name entry
+  let mixUpsRemaining = MAX_MIXUPS;
 
   // ── one-shot hurry flag ──
   let hurryFired = false;
@@ -475,6 +496,8 @@ html {
   const nameInput     = document.getElementById('name-input');
   const nameDetail    = document.getElementById('name-prompt-detail');
   const canvasWrapper = document.getElementById('canvas-wrapper');
+  const mixupBtn   = document.getElementById('mixup-btn');
+  const mixupCount = document.getElementById('mixup-count');
 
   // ── HELPERS ───────────────────────────────────────────────────────────────
   const cellState = (x, y) =>
@@ -613,6 +636,44 @@ html {
     }
   }
 
+  // ── MIX UP (Boxxi-style assist) ─────────────────────────────────────────
+  // Shuffles the currently-placed tiles into new positions. Same count of
+  // each color stays on the board — it just rearranges them so a player
+  // who's stuck (or just wants a different layout) gets fresh groupings.
+  // Limited uses per game, like the arcade original.
+  function updateMixupUI() {
+    mixupCount.textContent = '(' + mixUpsRemaining + ')';
+    mixupBtn.disabled = !gameActive || mixUpsRemaining <= 0;
+  }
+
+  function mixUp() {
+    if (!gameActive || mixUpsRemaining <= 0) return;
+
+    // Clear any current selection first
+    resetTable(Math.abs);
+    markedCount = 0;
+
+    // Fisher-Yates shuffle of all cell values (empties shuffle right along
+    // with tiles, so the board keeps its same "shape" of filled/empty cells)
+    for (let i = table.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = table[i]; table[i] = table[j]; table[j] = t;
+    }
+
+    mixUpsRemaining--;
+    updateMixupUI();
+
+    if (typeof SFX !== 'undefined' && SFX.good) SFX.good();
+    draw();
+    flashMessage('🔀 MIXED UP!');
+
+    // Safety net: if the shuffle happens to leave no possible moves, give
+    // the player fresh tiles rather than stranding them.
+    if (!hasMovesLeft()) {
+      setTimeout(() => { resetTable(); markedCount = 0; draw(); }, 900);
+    }
+  }
+
   // ── FLASH MESSAGE (brief canvas overlay, no game pause) ──────────────────
   let flashTimeout = null;
   function flashMessage(msg) {
@@ -639,6 +700,8 @@ html {
     markedCount = 0;
     gameActive = true;
     hurryFired = false;
+    mixUpsRemaining = MAX_MIXUPS;
+    updateMixupUI();
     resetTable();
     scoreEl.textContent = score;
     draw();
@@ -649,6 +712,7 @@ html {
     stopTimer();
     gameActive = false;
     canvasWrapper.className = '';
+    updateMixupUI();
 
     if (typeof SFX !== 'undefined' && SFX.over) SFX.over();
 
@@ -795,12 +859,15 @@ html {
     }
   });
 
+  mixupBtn.addEventListener('click', mixUp);
+
   document.getElementById('name-submit').addEventListener('click', submitName);
   nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitName(); });
 
   // ── INIT ──────────────────────────────────────────────────────────────────
   updateTimerUI();
   updateBest(0);
+  updateMixupUI();
   newGame();
 
 })();

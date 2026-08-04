@@ -656,11 +656,27 @@ html {
     resetTable(Math.abs);
     markedCount = 0;
 
-    // Fisher-Yates shuffle of all cell values (empties shuffle right along
-    // with tiles, so the board keeps its same "shape" of filled/empty cells)
-    for (let i = table.length - 1; i > 0; i--) {
+    // Extract indices and values of non-empty tiles
+    const tileIndices = [];
+    const tileValues = [];
+    for (let i = 0; i < table.length; i++) {
+      if (table[i] !== 0) {
+        tileIndices.push(i);
+        tileValues.push(table[i]);
+      }
+    }
+
+    // Fisher-Yates shuffle ONLY the extracted tile values
+    for (let i = tileValues.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      const t = table[i]; table[i] = table[j]; table[j] = t;
+      const t = tileValues[i];
+      tileValues[i] = tileValues[j];
+      tileValues[j] = t;
+    }
+
+    // Re-insert shuffled tiles into their original valid spots
+    for (let i = 0; i < tileIndices.length; i++) {
+      table[tileIndices[i]] = tileValues[i];
     }
 
     mixUpsRemaining--;
@@ -676,7 +692,6 @@ html {
       setTimeout(() => { resetTable(); markedCount = 0; draw(); }, 900);
     }
   }
-
   // ── FLASH MESSAGE (brief canvas overlay, no game pause) ──────────────────
   let flashTimeout = null;
   function flashMessage(msg) {

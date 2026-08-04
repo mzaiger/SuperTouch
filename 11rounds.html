@@ -110,7 +110,30 @@ html {
             justify-content: center;
             cursor: pointer;
             transition: transform 0.1s, filter 0.2s, top 0.4s ease-in-out, left 0.4s ease-in-out;
-            box-shadow: 2px 5px 8px rgba(0, 0, 0, 0.6);
+            box-shadow: 2px 6px 10px rgba(0, 0, 0, 0.7), inset 0 -5px 8px rgba(0, 0, 0, 0.18);
+            filter: saturate(0.8) contrast(0.96) brightness(0.96);
+        }
+
+        /* --- Grime / scuff / scratch texture layer (sits under the glossy highlight & the number) --- */
+        .ball::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+            background:
+                radial-gradient(circle at 28% 78%, rgba(0, 0, 0, 0.28) 0%, transparent 9%),
+                radial-gradient(circle at 68% 62%, rgba(0, 0, 0, 0.20) 0%, transparent 7%),
+                radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.15) 0%, transparent 6%),
+                radial-gradient(circle at 55% 20%, rgba(255, 255, 255, 0.10) 0%, transparent 11%),
+                repeating-linear-gradient(115deg, rgba(0, 0, 0, 0.09) 0px, rgba(0, 0, 0, 0.09) 1px, transparent 1px, transparent 7px),
+                repeating-linear-gradient(28deg, rgba(255, 255, 255, 0.06) 0px, rgba(255, 255, 255, 0.06) 1px, transparent 1px, transparent 10px);
+            mix-blend-mode: multiply;
+            opacity: 0.9;
         }
 
         .ball::after {
@@ -121,9 +144,22 @@ html {
             right: 0;
             bottom: 0;
             border-radius: 50%;
-            box-shadow: inset -10px -10px 20px rgba(0, 0, 0, 0.6), inset 5px 5px 15px rgba(255, 255, 255, 0.6);
+            box-shadow: inset -10px -10px 20px rgba(0, 0, 0, 0.65), inset 5px 5px 13px rgba(255, 255, 255, 0.35), inset 0 0 14px rgba(0, 0, 0, 0.3);
             pointer-events: none;
+            z-index: 2;
         }
+
+        /* Each ball number gets its own scuff-pattern rotation so no two look identical */
+        .b1::before { transform: rotate(12deg); }
+        .b2::before { transform: rotate(55deg); }
+        .b3::before { transform: rotate(98deg); }
+        .b4::before { transform: rotate(141deg); }
+        .b5::before { transform: rotate(184deg); }
+        .b6::before { transform: rotate(227deg); }
+        .b7::before { transform: rotate(270deg); }
+        .b8::before { transform: rotate(313deg); }
+        .b9::before { transform: rotate(35deg); }
+        .b10::before { transform: rotate(160deg); }
 
         .ball.covered {
             filter: brightness(0.35) saturate(0.2);
@@ -163,26 +199,31 @@ html {
         .b9 { background: linear-gradient(to bottom, #eeeeee 20%, #ffe100 20%, #ffe100 80%, #eeeeee 80%); }
         .b10 { background: linear-gradient(to bottom, #eeeeee 20%, #0033cc 20%, #0033cc 80%, #eeeeee 80%); }
 
-        /* number circle inside the ball - slightly bigger to match */
+        /* number circle inside the ball - slightly bigger to match, aged ivory finish */
         .number-circle {
-            background: #fff;
+            background:
+                linear-gradient(108deg, transparent 44%, rgba(0, 0, 0, 0.16) 47%, rgba(0, 0, 0, 0.16) 48%, transparent 51%),
+                radial-gradient(circle at 35% 28%, #fffaf0 0%, #eee0bd 55%, #d9c69c 100%);
             width: 40px;
             height: 48px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #000;
+            color: #1a1a1a;
             font-family: Arial, sans-serif;
             font-weight: 900;
             font-size: 27px;
             font-style: italic;
             position: relative;
-            z-index: 2;
+            z-index: 3;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.45), inset 0 0 1px rgba(255, 255, 255, 0.5);
         }
 
         .b8 .number-circle {
-            background: #eee;
+            background:
+                linear-gradient(108deg, transparent 44%, rgba(0, 0, 0, 0.16) 47%, rgba(0, 0, 0, 0.16) 48%, transparent 51%),
+                radial-gradient(circle at 35% 28%, #f5f0e6 0%, #ddd6c4 55%, #c2baa2 100%);
         }
 
         .overlay {
